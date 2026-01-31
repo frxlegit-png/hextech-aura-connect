@@ -76,7 +76,7 @@ const HeroSection = () => {
           </div>
 
           {/* Feature badges */}
-          <div className="flex flex-wrap justify-center gap-6 mt-16 animate-fade-up-delay-3">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mt-16 animate-fade-up-delay-3">
             {[
               { icon: Wifi, label: "High Speed" },
               { icon: Shield, label: "99.9% Uptime" },
@@ -84,10 +84,10 @@ const HeroSection = () => {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/30 border border-border/30"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-secondary/30 border border-border/30"
               >
-                <feature.icon className="w-4 h-4 text-primary" />
-                <span className="text-sm text-muted-foreground">{feature.label}</span>
+                <feature.icon className="w-4 h-4 text-primary flex-shrink-0" />
+                <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">{feature.label}</span>
               </div>
             ))}
           </div>
