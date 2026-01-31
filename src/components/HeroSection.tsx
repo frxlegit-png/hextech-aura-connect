@@ -80,7 +80,7 @@ const HeroSection = () => {
             {[
               { icon: Wifi, label: "High Speed" },
               { icon: Shield, label: "99.9% Uptime" },
-              { icon: Zap, label: "Low Latency" },
+              { icon: Zap, label: "Instant Setup" },
             ].map((feature, index) => (
               <div
                 key={index}
