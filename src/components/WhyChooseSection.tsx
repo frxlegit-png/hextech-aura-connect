@@ -1,4 +1,6 @@
 import { Zap, Shield, HeadphonesIcon, DollarSign, Wifi, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
+import { ScrollReveal, StaggerContainer, StaggerItem, ScaleOnHover } from "@/components/ui/motion";
 
 const WhyChooseSection = () => {
   const benefits = [
@@ -38,7 +40,7 @@ const WhyChooseSection = () => {
     <section id="why-us" className="relative py-24 lg:py-32 section-gradient">
       <div className="container mx-auto px-6">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <ScrollReveal className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block text-primary text-sm font-semibold uppercase tracking-widest mb-4">
             Why Choose Us
           </span>
@@ -48,32 +50,40 @@ const WhyChooseSection = () => {
           <p className="text-lg text-muted-foreground">
             We've designed every aspect of our service to deliver the best possible internet experience.
           </p>
-        </div>
+        </ScrollReveal>
 
         {/* Benefits Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" staggerDelay={0.1}>
           {benefits.map((benefit, index) => (
-            <div
-              key={index}
-              className="group relative"
-            >
-              <div className="glass-card h-full p-8 rounded-2xl transition-all duration-300 hover:border-primary/30 hover:-translate-y-1">
-                {/* Icon */}
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                  <benefit.icon className="w-7 h-7 text-primary" />
-                </div>
-                
-                {/* Content */}
-                <h3 className="text-xl font-semibold text-foreground mb-3">
-                  {benefit.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {benefit.description}
-                </p>
-              </div>
-            </div>
+            <StaggerItem key={index}>
+              <ScaleOnHover className="h-full">
+                <motion.div
+                  className="glass-card h-full p-8 rounded-2xl transition-colors duration-300 hover:border-primary/30"
+                  whileHover={{ 
+                    boxShadow: "0 0 30px hsl(var(--primary) / 0.1)",
+                  }}
+                >
+                  {/* Icon */}
+                  <motion.div 
+                    className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6"
+                    whileHover={{ scale: 1.1, backgroundColor: "hsl(var(--primary) / 0.2)" }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <benefit.icon className="w-7 h-7 text-primary" />
+                  </motion.div>
+                  
+                  {/* Content */}
+                  <h3 className="text-xl font-semibold text-foreground mb-3">
+                    {benefit.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {benefit.description}
+                  </p>
+                </motion.div>
+              </ScaleOnHover>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   );
