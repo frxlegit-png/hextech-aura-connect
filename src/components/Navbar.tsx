@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import HexLogo from "@/components/HexLogo";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -23,7 +25,10 @@ const Navbar = () => {
   ];
 
   return (
-    <nav
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
           ? "bg-background/80 backdrop-blur-xl border-b border-border/50 py-4"
@@ -33,25 +38,7 @@ const Navbar = () => {
       <div className="container mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2 group">
-          <div className="relative w-10 h-10 flex items-center justify-center">
-            <svg
-              viewBox="0 0 40 40"
-              className="w-full h-full text-primary transition-transform duration-300 group-hover:scale-110"
-            >
-              <polygon
-                points="20,2 37,11 37,29 20,38 3,29 3,11"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="drop-shadow-lg"
-              />
-              <polygon
-                points="20,8 31,14 31,26 20,32 9,26 9,14"
-                fill="currentColor"
-                opacity="0.3"
-              />
-            </svg>
-          </div>
+          <HexLogo size={40} />
           <span className="text-xl font-bold tracking-tight text-foreground">
             Hex<span className="text-primary">tech</span>
           </span>
@@ -59,57 +46,106 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
+          {navLinks.map((link, index) => (
+            <motion.a
               key={link.label}
               href={link.href}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 relative group"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * index, duration: 0.4 }}
+              whileHover={{ y: -2 }}
             >
               {link.label}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-            </a>
+            </motion.a>
           ))}
         </div>
 
         {/* CTA Button */}
-        <div className="hidden md:block">
-          <Button variant="hero" size="default" asChild>
-            <a href="#contact">Get Connected</a>
-          </Button>
-        </div>
+        <motion.div 
+          className="hidden md:block"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+        >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button variant="hero" size="default" asChild>
+              <a href="#contact">Get Connected</a>
+            </Button>
+          </motion.div>
+        </motion.div>
 
         {/* Mobile Menu Button */}
-        <button
+        <motion.button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="md:hidden p-2 text-foreground"
+          whileTap={{ scale: 0.9 }}
         >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+          <AnimatePresence mode="wait">
+            {isMobileMenuOpen ? (
+              <motion.div
+                key="close"
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X size={24} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="menu"
+                initial={{ rotate: 90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: -90, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <Menu size={24} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.button>
       </div>
 
       {/* Mobile Menu */}
-      <div
-        className={`md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border transition-all duration-300 ${
-          isMobileMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-      >
-        <div className="container mx-auto px-6 py-6 flex flex-col gap-4">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-lg text-muted-foreground hover:text-foreground transition-colors py-2"
-            >
-              {link.label}
-            </a>
-          ))}
-          <Button variant="hero" size="lg" className="mt-4" asChild>
-            <a href="#contact">Get Connected</a>
-          </Button>
-        </div>
-      </div>
-    </nav>
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
+            className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border overflow-hidden"
+          >
+            <div className="container mx-auto px-6 py-6 flex flex-col gap-4">
+              {navLinks.map((link, index) => (
+                <motion.a
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-lg text-muted-foreground hover:text-foreground transition-colors py-2"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05 * index, duration: 0.3 }}
+                >
+                  {link.label}
+                </motion.a>
+              ))}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.3 }}
+              >
+                <Button variant="hero" size="lg" className="mt-4 w-full" asChild>
+                  <a href="#contact">Get Connected</a>
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 };
 
