@@ -2,64 +2,14 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Circle, Popup, useMap } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
-
-// Zimbabwe coverage areas (Harare-based for now)
-const coverageAreas = [
-  { 
-    name: "Harare CBD", 
-    center: [-17.8292, 31.0522] as LatLngExpression, 
-    radius: 3000, 
-    status: "active" as const 
-  },
-  { 
-    name: "Borrowdale", 
-    center: [-17.7575, 31.0989] as LatLngExpression, 
-    radius: 2500, 
-    status: "active" as const 
-  },
-  { 
-    name: "Avondale", 
-    center: [-17.7925, 31.0339] as LatLngExpression, 
-    radius: 2000, 
-    status: "active" as const 
-  },
-  { 
-    name: "Mount Pleasant", 
-    center: [-17.7679, 31.0485] as LatLngExpression, 
-    radius: 2200, 
-    status: "active" as const 
-  },
-  { 
-    name: "Eastlea", 
-    center: [-17.8194, 31.0783] as LatLngExpression, 
-    radius: 1800, 
-    status: "active" as const 
-  },
-  { 
-    name: "Belvedere", 
-    center: [-17.8372, 31.0247] as LatLngExpression, 
-    radius: 1500, 
-    status: "expanding" as const 
-  },
-  { 
-    name: "Highlands", 
-    center: [-17.7839, 31.0694] as LatLngExpression, 
-    radius: 2000, 
-    status: "active" as const 
-  },
-  { 
-    name: "Chitungwiza", 
-    center: [-18.0127, 31.0755] as LatLngExpression, 
-    radius: 4000, 
-    status: "expanding" as const 
-  },
-];
+import { useCoverageAreas, CoverageArea } from "@/hooks/useCoverageAreas";
 
 interface MapClickHandlerProps {
   onLocationSelect: (lat: number, lng: number, inCoverage: boolean) => void;
+  coverageAreas: CoverageArea[];
 }
 
-const MapClickHandler = ({ onLocationSelect }: MapClickHandlerProps) => {
+const MapClickHandler = ({ onLocationSelect, coverageAreas }: MapClickHandlerProps) => {
   const map = useMap();
   
   useEffect(() => {
@@ -68,8 +18,7 @@ const MapClickHandler = ({ onLocationSelect }: MapClickHandlerProps) => {
       
       // Check if clicked location is within any coverage area
       const inCoverage = coverageAreas.some(area => {
-        const areaCenter = area.center as [number, number];
-        const distance = map.distance([lat, lng], areaCenter);
+        const distance = map.distance([lat, lng], [area.latitude, area.longitude]);
         return distance <= area.radius && area.status === "active";
       });
       
@@ -80,7 +29,7 @@ const MapClickHandler = ({ onLocationSelect }: MapClickHandlerProps) => {
     return () => {
       map.off("click", handleClick);
     };
-  }, [map, onLocationSelect]);
+  }, [map, onLocationSelect, coverageAreas]);
   
   return null;
 };
@@ -90,6 +39,7 @@ interface CoverageMapProps {
 }
 
 const CoverageMap = ({ onLocationSelect }: CoverageMapProps) => {
+  const { areas: coverageAreas, isLoading } = useCoverageAreas();
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
@@ -103,6 +53,14 @@ const CoverageMap = ({ onLocationSelect }: CoverageMapProps) => {
 
   // Harare center
   const center: LatLngExpression = [-17.8252, 31.0335];
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-secondary/30 rounded-2xl">
+        <p className="text-muted-foreground">Loading map...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden">
@@ -118,10 +76,10 @@ const CoverageMap = ({ onLocationSelect }: CoverageMapProps) => {
         />
         
         {/* Coverage circles */}
-        {coverageAreas.map((area, index) => (
+        {coverageAreas.map((area) => (
           <Circle
-            key={index}
-            center={area.center}
+            key={area.id}
+            center={[area.latitude, area.longitude] as LatLngExpression}
             radius={area.radius}
             pathOptions={{
               color: area.status === "active" ? "hsl(185, 100%, 50%)" : "hsl(45, 100%, 50%)",
@@ -168,7 +126,7 @@ const CoverageMap = ({ onLocationSelect }: CoverageMapProps) => {
           </Circle>
         )}
         
-        <MapClickHandler onLocationSelect={handleLocationSelect} />
+        <MapClickHandler onLocationSelect={handleLocationSelect} coverageAreas={coverageAreas} />
       </MapContainer>
       
       {/* Legend overlay */}
