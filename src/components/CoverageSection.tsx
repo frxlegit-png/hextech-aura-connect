@@ -2,25 +2,18 @@ import { MapPin, Signal, Check } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 import { lazy, Suspense, useState } from "react";
+import { useCoverageAreas } from "@/hooks/useCoverageAreas";
 
 // Lazy load the map component
 const CoverageMap = lazy(() => import("@/components/CoverageMap"));
 
 const CoverageSection = () => {
+  const { areas: coverageAreas, isLoading } = useCoverageAreas();
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
     inCoverage: boolean;
   } | null>(null);
-
-  const coverageAreas = [
-    { name: "Harare CBD", status: "active" },
-    { name: "Borrowdale", status: "active" },
-    { name: "Mount Pleasant", status: "active" },
-    { name: "Avondale", status: "active" },
-    { name: "Chitungwiza", status: "expanding" },
-    { name: "Highlands", status: "active" },
-  ];
 
   const networkStats = [
     { label: "Network Nodes", value: "150+" },
@@ -75,8 +68,8 @@ const CoverageSection = () => {
 
             {/* Coverage Areas */}
             <StaggerContainer className="grid grid-cols-2 gap-3 mb-10">
-              {coverageAreas.map((area, index) => (
-                <StaggerItem key={index}>
+              {coverageAreas.slice(0, 6).map((area) => (
+                <StaggerItem key={area.id}>
                   <motion.div
                     className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border/50"
                     whileHover={{ scale: 1.02, borderColor: "hsl(var(--primary) / 0.3)" }}
