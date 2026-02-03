@@ -12,7 +12,11 @@ const Logo = ({ className = "", size = 40 }: LogoProps) => {
       src={logoImage}
       alt="Hextech Logo"
       className={`object-contain ${className}`}
-      style={{ width: size, height: size }}
+      style={{ 
+        width: size, 
+        height: size,
+        mixBlendMode: 'lighten',
+      }}
       whileHover={{ scale: 1.1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     />
