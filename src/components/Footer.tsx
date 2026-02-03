@@ -1,6 +1,6 @@
 import { Twitter, Facebook, Instagram, Linkedin, ArrowUpRight } from "lucide-react";
 import { motion } from "framer-motion";
-import HexLogo from "@/components/HexLogo";
+import Logo from "@/components/Logo";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -45,7 +45,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-2">
             <a href="#" className="flex items-center gap-2 mb-6">
-              <HexLogo size={40} />
+              <Logo size={40} />
               <span className="text-xl font-bold text-foreground">
                 Hex<span className="text-primary">tech</span>
               </span>
