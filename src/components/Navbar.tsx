@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import HexLogo from "@/components/HexLogo";
+import Logo from "@/components/Logo";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -38,7 +38,7 @@ const Navbar = () => {
       <div className="container mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <a href="#" className="flex items-center gap-2 group">
-          <HexLogo size={40} />
+          <Logo size={40} />
           <span className="text-xl font-bold tracking-tight text-foreground">
             Hex<span className="text-primary">tech</span>
           </span>
