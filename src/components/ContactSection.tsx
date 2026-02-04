@@ -6,9 +6,11 @@ import { Send, MapPin, Phone, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const ContactSection = () => {
   const { toast } = useToast();
+  const { getSection, getContactInfo, isLoading } = useSiteContent();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -40,10 +42,13 @@ const ContactSection = () => {
     }));
   };
 
-  const contactInfo = [
-    { icon: MapPin, label: "Location", value: "Harare, Zimbabwe" },
-    { icon: Phone, label: "WhatsApp", value: "+263 78 380 0102" },
-    { icon: Mail, label: "Email", value: "info@hextech.co.zw" },
+  const contactContent = getSection('contact');
+  const contactInfo = getContactInfo();
+
+  const contactDetails = [
+    { icon: MapPin, label: "Location", value: contactInfo.location },
+    { icon: Phone, label: contactInfo.whatsappLabel, value: contactInfo.phone },
+    { icon: Mail, label: "Email", value: contactInfo.email },
   ];
 
   return (
@@ -52,13 +57,17 @@ const ContactSection = () => {
         {/* Header */}
         <ScrollReveal className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block text-primary text-sm font-semibold uppercase tracking-widest mb-4">
-            Get Started
+            {contactContent?.subtitle || "Get Started"}
           </span>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            Ready to <span className="text-primary">Connect?</span>
+            {contactContent?.title ? (
+              contactContent.title
+            ) : (
+              <>Ready to <span className="text-primary">Connect?</span></>
+            )}
           </h2>
           <p className="text-lg text-muted-foreground">
-            Fill out the form below and our team will reach out to schedule your installation.
+            {contactContent?.description || "Fill out the form below and our team will reach out to schedule your installation."}
           </p>
         </ScrollReveal>
 
@@ -68,7 +77,7 @@ const ContactSection = () => {
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-6">Contact Information</h3>
               <StaggerContainer className="space-y-4" staggerDelay={0.1}>
-                {contactInfo.map((info, index) => (
+                {contactDetails.map((info, index) => (
                   <StaggerItem key={index}>
                     <motion.div 
                       className="flex items-start gap-4"
@@ -101,15 +110,15 @@ const ContactSection = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Monday - Friday</span>
-                  <span className="text-foreground">8:00 AM - 8:00 PM</span>
+                  <span className="text-foreground">{contactInfo.supportHours.weekdays}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Saturday</span>
-                  <span className="text-foreground">9:00 AM - 5:00 PM</span>
+                  <span className="text-foreground">{contactInfo.supportHours.saturday}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Sunday</span>
-                  <span className="text-foreground">Closed</span>
+                  <span className="text-foreground">{contactInfo.supportHours.sunday}</span>
                 </div>
               </div>
             </motion.div>

@@ -1,9 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Wifi, Zap, Shield } from "lucide-react";
 import { motion } from "framer-motion";
-import { FadeIn } from "@/components/ui/motion";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const HeroSection = () => {
+  const { getSection } = useSiteContent();
+  const heroContent = getSection('hero');
+
   return (
     <section className="relative min-h-screen flex items-center justify-center hero-gradient overflow-hidden">
       {/* Animated background elements */}
@@ -99,7 +102,9 @@ const HeroSection = () => {
             transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
           >
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span className="text-sm text-muted-foreground">Next-Gen Wireless Internet</span>
+            <span className="text-sm text-muted-foreground">
+              {heroContent?.subtitle || "Next-Gen Wireless Internet"}
+            </span>
           </motion.div>
 
           {/* Main Headline */}
@@ -109,9 +114,23 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: [0.25, 0.4, 0.25, 1] }}
           >
-            <span className="text-foreground">Internet at the</span>
-            <br />
-            <span className="text-primary glow-text">Speed of Light</span>
+            {heroContent?.title ? (
+              <span className="text-foreground">
+                {heroContent.title.split('.')[0]}
+                {heroContent.title.includes('.') && (
+                  <>
+                    <br />
+                    <span className="text-primary glow-text">{heroContent.title.split('.').slice(1).join('.')}</span>
+                  </>
+                )}
+              </span>
+            ) : (
+              <>
+                <span className="text-foreground">Internet at the</span>
+                <br />
+                <span className="text-primary glow-text">Speed of Light</span>
+              </>
+            )}
           </motion.h1>
 
           {/* Subheadline */}
@@ -121,8 +140,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
           >
-            Experience ultra-fast, reliable wireless connectivity that keeps you connected 24/7. 
-            No cables, no limits, just pure speed.
+            {heroContent?.description || "Experience ultra-fast, reliable wireless connectivity that keeps you connected 24/7. No cables, no limits, just pure speed."}
           </motion.p>
 
           {/* CTA Buttons */}

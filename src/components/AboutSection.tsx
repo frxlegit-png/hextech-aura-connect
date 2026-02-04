@@ -1,8 +1,12 @@
 import { Globe, Users, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { ScrollReveal, StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const AboutSection = () => {
+  const { getSection } = useSiteContent();
+  const aboutContent = getSection('about');
+
   const stats = [
     { icon: Globe, value: "10+", label: "Coverage Areas" },
     { icon: Users, value: "5K+", label: "Happy Customers" },
@@ -16,17 +20,20 @@ const AboutSection = () => {
           {/* Content */}
           <ScrollReveal>
             <span className="inline-block text-primary text-sm font-semibold uppercase tracking-widest mb-4">
-              About Hextech
+              {aboutContent?.subtitle || "About Hextech"}
             </span>
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 leading-tight">
-              The Future of{" "}
-              <span className="text-primary">Wireless Connectivity</span>
+              {aboutContent?.title ? (
+                aboutContent.title
+              ) : (
+                <>
+                  The Future of{" "}
+                  <span className="text-primary">Wireless Connectivity</span>
+                </>
+              )}
             </h2>
             <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-              Hextech is a next-generation wireless internet service provider committed to 
-              delivering blazing-fast, reliable connectivity to homes and businesses. 
-              We leverage cutting-edge technology to provide seamless internet experiences 
-              without the limitations of traditional cable infrastructure.
+              {aboutContent?.description || "Hextech is a next-generation wireless internet service provider committed to delivering blazing-fast, reliable connectivity to homes and businesses."}
             </p>
             <p className="text-muted-foreground leading-relaxed">
               Our network is built for performance, reliability, and scalability. Whether 
