@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, MapPin, FileText, Image, Users, Home } from 'lucide-react';
+import { LogOut, MapPin, FileText, Image, Users, Home, Phone } from 'lucide-react';
 import CoverageAreasManager from '@/components/admin/CoverageAreasManager';
 import ContentManager from '@/components/admin/ContentManager';
 import AssetsManager from '@/components/admin/AssetsManager';
+import ContactInfoManager from '@/components/admin/ContactInfoManager';
 import { motion } from 'framer-motion';
 
 const Admin = () => {
@@ -92,18 +93,22 @@ const Admin = () => {
           transition={{ duration: 0.5 }}
         >
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="coverage" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                <span className="hidden sm:inline">Coverage Areas</span>
+                <span className="hidden sm:inline">Coverage</span>
               </TabsTrigger>
               <TabsTrigger value="content" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Site Content</span>
+                <span className="hidden sm:inline">Content</span>
+              </TabsTrigger>
+              <TabsTrigger value="contact" className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                <span className="hidden sm:inline">Contact</span>
               </TabsTrigger>
               <TabsTrigger value="assets" className="flex items-center gap-2">
                 <Image className="w-4 h-4" />
-                <span className="hidden sm:inline">Logos & Images</span>
+                <span className="hidden sm:inline">Assets</span>
               </TabsTrigger>
             </TabsList>
 
@@ -113,6 +118,10 @@ const Admin = () => {
 
             <TabsContent value="content">
               <ContentManager />
+            </TabsContent>
+
+            <TabsContent value="contact">
+              <ContactInfoManager />
             </TabsContent>
 
             <TabsContent value="assets">
