@@ -61,7 +61,7 @@ const ServicesSection = () => {
                   <p className="text-muted-foreground mb-6">Everything you need, nothing you don't</p>
                   
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-5xl md:text-6xl font-bold text-foreground">$30</span>
+                    <span className="text-5xl md:text-6xl font-bold text-foreground">$30.99</span>
                     <span className="text-xl text-muted-foreground">/month</span>
                   </div>
                 </div>
@@ -119,7 +119,7 @@ const ServicesSection = () => {
                 <p className="text-muted-foreground mb-6">Complete peace of mind for your hardware</p>
                 
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl md:text-6xl font-bold text-foreground">$15</span>
+                  <span className="text-5xl md:text-6xl font-bold text-foreground">$24.99</span>
                   <span className="text-xl text-muted-foreground">one-time</span>
                 </div>
               </div>
