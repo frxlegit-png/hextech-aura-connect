@@ -9,7 +9,7 @@ const ServicesSection = () => {
     "High-speed wireless connection",
     "Low latency for gaming & streaming",
     "24/7 network monitoring",
-    "No equipment costs",
+    "Free equipment loan (company-owned)",
     "No setup fees",
     "Free professional installation",
     "Dedicated customer support",
@@ -107,16 +107,16 @@ const ServicesSection = () => {
             >
               {/* Badge */}
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary border border-border text-foreground text-xs font-semibold shadow-lg">
-                  <Shield className="w-3.5 h-3.5 text-primary" />
-                  Add-On
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold shadow-lg">
+                  <Shield className="w-3.5 h-3.5" />
+                  Required
                 </div>
               </div>
 
               {/* Header */}
               <div className="text-center mb-8 pt-4">
                 <h3 className="text-2xl font-bold text-foreground mb-2">Equipment Insurance</h3>
-                <p className="text-muted-foreground mb-6">Complete peace of mind for your hardware</p>
+                <p className="text-muted-foreground mb-6">Mandatory cover for your loaned equipment</p>
                 
                 <div className="flex items-baseline justify-center gap-1">
                   <span className="text-5xl md:text-6xl font-bold text-foreground">$24.99</span>
@@ -127,7 +127,7 @@ const ServicesSection = () => {
               {/* Benefits */}
               <div className="space-y-4 mb-8 flex-grow">
                 {[
-                  "Full equipment replacement coverage",
+                  "Covers damage to company-owned equipment",
                   "Protection against accidental damage",
                   "Lightning & surge protection",
                   "24-hour replacement guarantee",
@@ -155,14 +155,14 @@ const ServicesSection = () => {
                 <Button variant="heroOutline" size="xl" className="w-full" asChild>
                   <a href="#contact" className="flex items-center justify-center gap-2">
                     <Shield className="w-5 h-5" />
-                    Add Insurance
+                    Get Started
                   </a>
                 </Button>
               </motion.div>
 
               {/* Note */}
               <p className="text-center text-xs text-muted-foreground mt-6">
-                One-time payment. Lifetime coverage for your equipment.
+                One-time payment required at signup. Covers all loaned equipment.
               </p>
             </motion.div>
           </ScrollReveal>

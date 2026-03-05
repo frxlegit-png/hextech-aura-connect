@@ -11,8 +11,8 @@ const WhyChooseSection = () => {
     },
     {
       icon: Shield,
-      title: "No Equipment Costs",
-      description: "All hardware is included with your subscription. No hidden charges or surprise bills.",
+      title: "Free Equipment Loan",
+      description: "We provide all equipment at no cost — it remains our property, so you never worry about buying or replacing hardware.",
     },
     {
       icon: TrendingUp,
