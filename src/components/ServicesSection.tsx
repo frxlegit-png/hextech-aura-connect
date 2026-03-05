@@ -48,9 +48,9 @@ const ServicesSection = () => {
                 transition={{ duration: 0.3 }}
               >
                 {/* Popular badge */}
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                    <Star className="w-4 h-4 fill-current" />
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg">
+                    <Star className="w-3.5 h-3.5 fill-current" />
                     Most Popular
                   </div>
                 </div>
@@ -61,7 +61,7 @@ const ServicesSection = () => {
                   <p className="text-muted-foreground mb-6">Everything you need, nothing you don't</p>
                   
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-5xl md:text-6xl font-bold text-foreground">$30.99</span>
+                    <span className="text-5xl md:text-6xl font-bold text-foreground">$29.99</span>
                     <span className="text-xl text-muted-foreground">/month</span>
                   </div>
                 </div>
@@ -106,9 +106,9 @@ const ServicesSection = () => {
               transition={{ duration: 0.3 }}
             >
               {/* Badge */}
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary border border-border text-foreground text-sm font-semibold">
-                  <Shield className="w-4 h-4 text-primary" />
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary border border-border text-foreground text-xs font-semibold shadow-lg">
+                  <Shield className="w-3.5 h-3.5 text-primary" />
                   Add-On
                 </div>
               </div>
