@@ -43,7 +43,7 @@ const ServicesSection = () => {
               <div className="absolute -inset-1 bg-gradient-to-r from-primary/50 via-accent/50 to-primary/50 rounded-3xl blur-xl opacity-30 animate-pulse" />
               
               <motion.div 
-                className="glass-card relative p-8 rounded-3xl gradient-border h-full"
+                className="glass-card relative pt-12 p-8 rounded-3xl gradient-border h-full"
                 whileHover={{ y: -5 }}
                 transition={{ duration: 0.3 }}
               >
@@ -101,7 +101,7 @@ const ServicesSection = () => {
           {/* Equipment Insurance Card */}
           <ScrollReveal delay={0.2}>
             <motion.div 
-              className="glass-card relative p-8 rounded-3xl border border-border/50 h-full flex flex-col"
+              className="glass-card relative pt-12 p-8 rounded-3xl border border-border/50 h-full flex flex-col"
               whileHover={{ y: -5, borderColor: "hsl(var(--primary) / 0.3)" }}
               transition={{ duration: 0.3 }}
             >
