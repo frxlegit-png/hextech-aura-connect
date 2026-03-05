@@ -48,7 +48,7 @@ const ServicesSection = () => {
                 transition={{ duration: 0.3 }}
               >
                 {/* Popular badge */}
-                <div className="absolute -top-1/2 left-1/2 -translate-x-1/2 z-10">
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-10">
                   <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg">
                     <Star className="w-3.5 h-3.5 fill-current" />
                     Most Popular
