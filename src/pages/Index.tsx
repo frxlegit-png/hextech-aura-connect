@@ -1,26 +1,43 @@
+import { lazy, Suspense } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import AboutSection from "@/components/AboutSection";
-import ServicesSection from "@/components/ServicesSection";
-import WhyChooseSection from "@/components/WhyChooseSection";
-import CoverageSection from "@/components/CoverageSection";
-import ContactSection from "@/components/ContactSection";
-import Footer from "@/components/Footer";
+import SmoothScroll from "@/components/SmoothScroll";
+import CursorGlow from "@/components/CursorGlow";
+
+const ScrollStorytelling = lazy(() => import("@/components/ScrollStorytelling"));
+const AboutSection = lazy(() => import("@/components/AboutSection"));
+const ServicesSection = lazy(() => import("@/components/ServicesSection"));
+const WhyChooseSection = lazy(() => import("@/components/WhyChooseSection"));
+const NetworkVisualization = lazy(() => import("@/components/NetworkVisualization"));
+const AnimatedMetrics = lazy(() => import("@/components/AnimatedMetrics"));
+const CoverageSection = lazy(() => import("@/components/CoverageSection"));
+const ContactSection = lazy(() => import("@/components/ContactSection"));
+const Footer = lazy(() => import("@/components/Footer"));
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <Navbar />
-      <main>
-        <HeroSection />
-        <AboutSection />
-        <ServicesSection />
-        <WhyChooseSection />
-        <CoverageSection />
-        <ContactSection />
-      </main>
-      <Footer />
-    </div>
+    <SmoothScroll>
+      <div className="min-h-screen bg-background overflow-x-hidden">
+        <CursorGlow />
+        <Navbar />
+        <main>
+          <HeroSection />
+          <Suspense fallback={null}>
+            <ScrollStorytelling />
+            <AboutSection />
+            <ServicesSection />
+            <WhyChooseSection />
+            <NetworkVisualization />
+            <AnimatedMetrics />
+            <CoverageSection />
+            <ContactSection />
+          </Suspense>
+        </main>
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      </div>
+    </SmoothScroll>
   );
 };
 
