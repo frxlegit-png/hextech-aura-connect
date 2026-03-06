@@ -109,14 +109,15 @@ const NetworkNodes = () => {
           ];
           const geometry = new THREE.BufferGeometry().setFromPoints(points);
           return (
-            <line key={`${i}-${j}`} geometry={geometry}>
-              <lineBasicMaterial
-                color="#00F5FF"
-                transparent
-                opacity={0.1}
-                blending={THREE.AdditiveBlending}
-              />
-            </line>
+            <primitive key={`${i}-${j}`} object={new THREE.Line(
+              geometry,
+              new THREE.LineBasicMaterial({
+                color: "#00F5FF",
+                transparent: true,
+                opacity: 0.1,
+                blending: THREE.AdditiveBlending,
+              })
+            )} />
           );
         })
       )}
