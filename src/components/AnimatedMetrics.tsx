@@ -3,10 +3,10 @@ import { motion, useInView } from "framer-motion";
 import { MapPin, Users, Wifi, Gauge } from "lucide-react";
 
 const metrics = [
-  { icon: MapPin, value: 150, suffix: "+", label: "Connected Locations" },
-  { icon: Users, value: 5000, suffix: "+", label: "Active Users" },
+  { icon: MapPin, value: 20, suffix: "+", label: "Connected Locations" },
+  { icon: Users, value: 300, suffix: "+", label: "Active Users" },
   { icon: Wifi, value: 99.9, suffix: "%", label: "Network Uptime", decimals: 1 },
-  { icon: Gauge, value: 100, suffix: "Mbps", label: "Average Speed" },
+  { icon: Gauge, value: 25, suffix: "Mbps", label: "Average Speed" },
 ];
 
 const CountUp = ({ target, suffix = "", decimals = 0 }: { target: number; suffix: string; decimals?: number }) => {

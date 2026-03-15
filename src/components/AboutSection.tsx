@@ -48,7 +48,7 @@ const AboutSection = () => {
 
   const stats = [
     { icon: Globe, value: "10+", label: "Coverage Areas" },
-    { icon: Users, value: "5K+", label: "Happy Customers" },
+    { icon: Users, value: "300+", label: "Happy Customers" },
     { icon: BarChart3, value: "99.9%", label: "Network Uptime" },
   ];
 
