@@ -86,7 +86,7 @@ const NodeIcon = ({ type, active }: { type: string; active: boolean }) => {
 const NetworkVisualization = () => {
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   return (
     <section className="relative py-24 lg:py-32 bg-background overflow-hidden">
