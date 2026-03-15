@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 
-interface Node {
+interface CityNode {
   id: number;
   x: number;
   y: number;
@@ -10,15 +10,15 @@ interface Node {
   detail: string;
 }
 
-const nodes: Node[] = [
-  { id: 1, x: 50, y: 20, type: "hub", label: "Central Hub", detail: "10 Gbps backbone" },
-  { id: 2, x: 25, y: 45, type: "tower", label: "Tower Alpha", detail: "2.4 GHz / 5 GHz" },
-  { id: 3, x: 75, y: 40, type: "tower", label: "Tower Beta", detail: "5 GHz / 6 GHz" },
-  { id: 4, x: 15, y: 70, type: "home", label: "Residential A", detail: "100 Mbps" },
-  { id: 5, x: 35, y: 75, type: "home", label: "Residential B", detail: "150 Mbps" },
-  { id: 6, x: 65, y: 68, type: "home", label: "Business Park", detail: "500 Mbps" },
-  { id: 7, x: 85, y: 65, type: "home", label: "Residential C", detail: "100 Mbps" },
-  { id: 8, x: 50, y: 55, type: "tower", label: "Tower Gamma", detail: "Point-to-Point" },
+const cityNodes: CityNode[] = [
+  { id: 1, x: 500, y: 120, type: "hub", label: "Central Hub", detail: "10 Gbps Backbone" },
+  { id: 2, x: 180, y: 220, type: "tower", label: "Tower Alpha", detail: "2.4 / 5 GHz" },
+  { id: 3, x: 820, y: 200, type: "tower", label: "Tower Beta", detail: "5 / 6 GHz" },
+  { id: 4, x: 100, y: 380, type: "home", label: "Residential A", detail: "100 Mbps" },
+  { id: 5, x: 320, y: 400, type: "home", label: "Residential B", detail: "150 Mbps" },
+  { id: 6, x: 620, y: 370, type: "home", label: "Business Park", detail: "500 Mbps" },
+  { id: 7, x: 900, y: 370, type: "home", label: "Residential C", detail: "100 Mbps" },
+  { id: 8, x: 500, y: 310, type: "tower", label: "Tower Gamma", detail: "Point-to-Point" },
 ];
 
 const connections = [
@@ -28,65 +28,70 @@ const connections = [
   [8, 5], [8, 6],
 ];
 
-const NodeIcon = ({ type, active }: { type: string; active: boolean }) => {
-  const color = active ? "#00F5FF" : "hsl(0 0% 40%)";
-  const size = type === "hub" ? 20 : type === "tower" ? 16 : 12;
-  
-  if (type === "hub") {
-    return (
-      <g>
-        <polygon points={`0,-${size} ${size*0.87},-${size*0.5} ${size*0.87},${size*0.5} 0,${size} -${size*0.87},${size*0.5} -${size*0.87},-${size*0.5}`}
-          fill={active ? "hsl(183 100% 50% / 0.2)" : "hsl(0 0% 10%)"}
-          stroke={color}
-          strokeWidth="1.5"
-        />
-        {active && <circle r={size + 8} fill="none" stroke={color} strokeWidth="0.5" opacity={0.3}>
-          <animate attributeName="r" from={String(size + 4)} to={String(size + 20)} dur="2s" repeatCount="indefinite" />
-          <animate attributeName="opacity" from="0.4" to="0" dur="2s" repeatCount="indefinite" />
-        </circle>}
-      </g>
-    );
-  }
+// Building silhouettes for the skyline
+const buildings = [
+  { x: 30, w: 40, h: 140 },
+  { x: 75, w: 30, h: 90 },
+  { x: 110, w: 50, h: 170 },
+  { x: 165, w: 35, h: 110 },
+  { x: 210, w: 45, h: 200 },
+  { x: 260, w: 30, h: 130 },
+  { x: 300, w: 55, h: 160 },
+  { x: 360, w: 25, h: 80 },
+  { x: 395, w: 40, h: 220 },
+  { x: 440, w: 50, h: 180 },
+  { x: 495, w: 35, h: 250 },
+  { x: 535, w: 45, h: 150 },
+  { x: 585, w: 30, h: 190 },
+  { x: 620, w: 55, h: 120 },
+  { x: 680, w: 40, h: 210 },
+  { x: 725, w: 35, h: 140 },
+  { x: 765, w: 50, h: 170 },
+  { x: 820, w: 30, h: 100 },
+  { x: 855, w: 45, h: 230 },
+  { x: 905, w: 35, h: 160 },
+  { x: 945, w: 40, h: 120 },
+];
 
-  if (type === "tower") {
-    return (
-      <g>
-        <rect x={-size/3} y={-size} width={size*0.67} height={size*2} rx="2"
-          fill={active ? "hsl(183 100% 50% / 0.15)" : "hsl(0 0% 8%)"}
-          stroke={color} strokeWidth="1"
-        />
-        <line x1={0} y1={-size} x2={-size*0.8} y2={-size*0.3} stroke={color} strokeWidth="0.8" />
-        <line x1={0} y1={-size} x2={size*0.8} y2={-size*0.3} stroke={color} strokeWidth="0.8" />
-        {active && <>
-          <circle cx={-size*0.8} cy={-size*0.3} r={3} fill="none" stroke="#00F5FF" strokeWidth="0.5">
-            <animate attributeName="r" from="3" to="12" dur="1.5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" from="0.6" to="0" dur="1.5s" repeatCount="indefinite" />
-          </circle>
-          <circle cx={size*0.8} cy={-size*0.3} r={3} fill="none" stroke="#00F5FF" strokeWidth="0.5">
-            <animate attributeName="r" from="3" to="12" dur="1.5s" repeatCount="indefinite" begin="0.5s" />
-            <animate attributeName="opacity" from="0.6" to="0" dur="1.5s" repeatCount="indefinite" begin="0.5s" />
-          </circle>
-        </>}
-      </g>
-    );
-  }
+const DataPacket = ({ x1, y1, x2, y2, delay }: { x1: number; y1: number; x2: number; y2: number; delay: number }) => (
+  <circle r="3" fill="hsl(var(--primary))" opacity="0.9">
+    <animateMotion
+      dur="2s"
+      repeatCount="indefinite"
+      begin={`${delay}s`}
+      path={`M${x1},${y1} L${x2},${y2}`}
+    />
+    <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2s" repeatCount="indefinite" begin={`${delay}s`} />
+  </circle>
+);
 
-  return (
-    <g>
-      <rect x={-size*0.6} y={-size*0.5} width={size*1.2} height={size} rx="2"
-        fill={active ? "hsl(183 100% 50% / 0.1)" : "hsl(0 0% 6%)"}
-        stroke={color} strokeWidth="0.8"
-      />
-      <line x1={-size*0.3} y1={-size*0.5} x2={-size*0.3} y2={-size*0.8} stroke={color} strokeWidth="0.5" />
-      <line x1={size*0.3} y1={-size*0.5} x2={size*0.3} y2={-size*0.8} stroke={color} strokeWidth="0.5" />
-    </g>
-  );
-};
+const PulseRing = ({ cx, cy, color, delay = 0 }: { cx: number; cy: number; color: string; delay?: number }) => (
+  <>
+    <circle cx={cx} cy={cy} r="6" fill="none" stroke={color} strokeWidth="1" opacity="0">
+      <animate attributeName="r" from="6" to="30" dur="2.5s" repeatCount="indefinite" begin={`${delay}s`} />
+      <animate attributeName="opacity" from="0.6" to="0" dur="2.5s" repeatCount="indefinite" begin={`${delay}s`} />
+    </circle>
+    <circle cx={cx} cy={cy} r="6" fill="none" stroke={color} strokeWidth="0.5" opacity="0">
+      <animate attributeName="r" from="6" to="45" dur="2.5s" repeatCount="indefinite" begin={`${delay + 0.8}s`} />
+      <animate attributeName="opacity" from="0.3" to="0" dur="2.5s" repeatCount="indefinite" begin={`${delay + 0.8}s`} />
+    </circle>
+  </>
+);
 
 const NetworkVisualization = () => {
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.1 });
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.15 });
+
+  useEffect(() => {
+    if (isInView) {
+      const timer = setTimeout(() => setIsVisible(true), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isInView]);
+
+  const skylineBaseY = 450;
 
   return (
     <section className="relative py-24 lg:py-32 bg-background overflow-hidden">
@@ -101,96 +106,213 @@ const NetworkVisualization = () => {
             Network Architecture
           </span>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground font-display mb-4">
-            How We <span className="text-primary">Connect</span> You
+            A City, <span className="text-primary">Connected</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Our distributed wireless network ensures reliable, high-speed connectivity from hub to home.
+            Our distributed wireless network blankets the city with reliable, high-speed connectivity.
           </p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.97 }}
           animate={isInView ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 1, delay: 0.3 }}
-          className="glass-card p-6 md:p-10 rounded-3xl max-w-4xl mx-auto"
+          className="relative max-w-5xl mx-auto rounded-3xl overflow-hidden border border-border/30"
+          style={{ background: "linear-gradient(180deg, hsl(220 30% 4%) 0%, hsl(220 20% 7%) 60%, hsl(220 15% 10%) 100%)" }}
         >
-          <svg viewBox="0 0 100 90" className="w-full" style={{ maxHeight: "500px" }}>
-            {/* Grid lines */}
-            {[20, 40, 60, 80].map(y => (
-              <line key={`h${y}`} x1="5" y1={y} x2="95" y2={y} stroke="hsl(0 0% 15%)" strokeWidth="0.1" />
+          {/* Stars / sky dots */}
+          <div className="absolute inset-0 overflow-hidden" style={{ pointerEvents: "none" }}>
+            {Array.from({ length: 40 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-foreground/20"
+                style={{
+                  width: Math.random() > 0.7 ? 2 : 1,
+                  height: Math.random() > 0.7 ? 2 : 1,
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 40}%`,
+                  animation: `pulse ${2 + Math.random() * 3}s ease-in-out infinite`,
+                  animationDelay: `${Math.random() * 3}s`,
+                }}
+              />
             ))}
-            {[20, 40, 60, 80].map(x => (
-              <line key={`v${x}`} x1={x} y1="5" x2={x} y2="85" stroke="hsl(0 0% 15%)" strokeWidth="0.1" />
-            ))}
+          </div>
 
-            {/* Connections */}
-            {connections.map(([a, b], i) => {
-              const nodeA = nodes.find(n => n.id === a)!;
-              const nodeB = nodes.find(n => n.id === b)!;
-              const isActive = hoveredNode === a || hoveredNode === b;
+          <svg viewBox="0 0 1000 520" className="w-full relative z-10" style={{ minHeight: 300 }}>
+            <defs>
+              {/* Glow filter */}
+              <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="8" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+              {/* Building window gradient */}
+              <linearGradient id="buildingGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="hsl(220 20% 12%)" />
+                <stop offset="100%" stopColor="hsl(220 15% 6%)" />
+              </linearGradient>
+              {/* Ground glow */}
+              <radialGradient id="groundGlow" cx="50%" cy="0%" r="60%">
+                <stop offset="0%" stopColor="hsl(183 100% 50% / 0.06)" />
+                <stop offset="100%" stopColor="transparent" />
+              </radialGradient>
+            </defs>
+
+            {/* Ground glow */}
+            <rect x="0" y={skylineBaseY - 20} width="1000" height="100" fill="url(#groundGlow)" />
+
+            {/* Skyline buildings */}
+            {buildings.map((b, i) => {
+              const by = skylineBaseY - b.h;
               return (
-                <g key={i}>
-                  <line
-                    x1={nodeA.x} y1={nodeA.y} x2={nodeB.x} y2={nodeB.y}
-                    stroke={isActive ? "#00F5FF" : "hsl(0 0% 20%)"}
-                    strokeWidth={isActive ? "0.4" : "0.2"}
-                    strokeDasharray={isActive ? "none" : "1 1"}
-                    style={{ transition: "all 0.5s ease" }}
+                <g key={`b-${i}`}>
+                  <rect
+                    x={b.x} y={by} width={b.w} height={b.h}
+                    fill="url(#buildingGrad)"
+                    stroke="hsl(220 15% 16%)"
+                    strokeWidth="0.5"
+                    rx="1"
                   />
-                  {/* Data packet animation */}
-                  {isActive && (
-                    <circle r="0.8" fill="#00F5FF">
-                      <animateMotion
-                        dur="1.5s"
-                        repeatCount="indefinite"
-                        path={`M${nodeA.x},${nodeA.y} L${nodeB.x},${nodeB.y}`}
-                      />
-                    </circle>
+                  {/* Windows */}
+                  {Array.from({ length: Math.floor(b.h / 18) }).map((_, row) =>
+                    Array.from({ length: Math.floor(b.w / 12) }).map((_, col) => {
+                      const lit = Math.random() > 0.45;
+                      return (
+                        <rect
+                          key={`w-${i}-${row}-${col}`}
+                          x={b.x + 4 + col * 12}
+                          y={by + 6 + row * 18}
+                          width={6}
+                          height={8}
+                          rx="0.5"
+                          fill={lit ? "hsl(45 80% 70% / 0.5)" : "hsl(220 10% 8%)"}
+                          opacity={lit ? 0.3 + Math.random() * 0.5 : 0.3}
+                        />
+                      );
+                    })
+                  )}
+                </g>
+              );
+            })}
+
+            {/* Ground line */}
+            <line x1="0" y1={skylineBaseY} x2="1000" y2={skylineBaseY} stroke="hsl(183 100% 50% / 0.15)" strokeWidth="1" />
+
+            {/* Connection lines */}
+            {connections.map(([a, b], i) => {
+              const nA = cityNodes.find(n => n.id === a)!;
+              const nB = cityNodes.find(n => n.id === b)!;
+              const active = hoveredNode === a || hoveredNode === b;
+              return (
+                <g key={`conn-${i}`}>
+                  {/* Base line */}
+                  <line
+                    x1={nA.x} y1={nA.y} x2={nB.x} y2={nB.y}
+                    stroke={active ? "hsl(183 100% 50% / 0.6)" : "hsl(183 100% 50% / 0.12)"}
+                    strokeWidth={active ? 1.5 : 0.6}
+                    strokeDasharray={active ? "none" : "4 4"}
+                    style={{ transition: "all 0.4s ease" }}
+                  />
+                  {/* Glow line when active */}
+                  {active && (
+                    <line
+                      x1={nA.x} y1={nA.y} x2={nB.x} y2={nB.y}
+                      stroke="hsl(183 100% 50% / 0.15)"
+                      strokeWidth="4"
+                      filter="url(#glow-cyan)"
+                    />
+                  )}
+                  {/* Data packets */}
+                  {isVisible && (
+                    <DataPacket x1={nA.x} y1={nA.y} x2={nB.x} y2={nB.y} delay={i * 0.4} />
                   )}
                 </g>
               );
             })}
 
             {/* Nodes */}
-            {nodes.map((node) => {
-              const isActive = hoveredNode === node.id || hoveredNode === null;
+            {cityNodes.map((node) => {
+              const isHovered = hoveredNode === node.id;
+              const isActive = isHovered || hoveredNode === null;
+              const nodeColor = "hsl(183 100% 50%)";
+              const size = node.type === "hub" ? 10 : node.type === "tower" ? 8 : 6;
+
               return (
                 <g
                   key={node.id}
-                  transform={`translate(${node.x}, ${node.y})`}
                   onMouseEnter={() => setHoveredNode(node.id)}
                   onMouseLeave={() => setHoveredNode(null)}
                   style={{ cursor: "pointer" }}
+                  opacity={isActive ? 1 : 0.4}
+                  className="transition-opacity duration-300"
                 >
-                  <NodeIcon type={node.type} active={isActive} />
-                  
-                  {/* Tooltip */}
-                  {hoveredNode === node.id && (
+                  {/* Outer glow */}
+                  <circle cx={node.x} cy={node.y} r={size + 6} fill="hsl(183 100% 50% / 0.05)" />
+
+                  {/* Node circle */}
+                  <circle
+                    cx={node.x} cy={node.y} r={size}
+                    fill={node.type === "hub" ? "hsl(183 100% 50% / 0.25)" : node.type === "tower" ? "hsl(183 100% 50% / 0.15)" : "hsl(183 100% 50% / 0.1)"}
+                    stroke={nodeColor}
+                    strokeWidth={node.type === "hub" ? 2 : 1.2}
+                    filter="url(#glow-cyan)"
+                  />
+
+                  {/* Inner dot */}
+                  <circle cx={node.x} cy={node.y} r={size * 0.35} fill={nodeColor} />
+
+                  {/* Hub icon - hexagon */}
+                  {node.type === "hub" && (
+                    <text x={node.x} y={node.y + 1.5} textAnchor="middle" fontSize="10" fill={nodeColor} fontFamily="monospace">⬡</text>
+                  )}
+
+                  {/* Pulse rings for towers and hub */}
+                  {(node.type === "tower" || node.type === "hub") && isVisible && (
+                    <PulseRing cx={node.x} cy={node.y} color={nodeColor} delay={node.id * 0.5} />
+                  )}
+
+                  {/* Label */}
+                  <text
+                    x={node.x}
+                    y={node.y - size - 10}
+                    textAnchor="middle"
+                    fontSize="11"
+                    fill={isHovered ? "hsl(183 100% 50%)" : "hsl(0 0% 55%)"}
+                    fontFamily="'Space Grotesk', sans-serif"
+                    fontWeight={isHovered ? "600" : "400"}
+                    style={{ transition: "all 0.3s ease" }}
+                  >
+                    {node.label}
+                  </text>
+
+                  {/* Detail tooltip on hover */}
+                  {isHovered && (
                     <g>
                       <rect
-                        x={-20} y={node.type === "home" ? 14 : 22}
-                        width="40" height="14" rx="2"
-                        fill="hsl(0 0% 5% / 0.95)"
-                        stroke="#00F5FF"
-                        strokeWidth="0.3"
+                        x={node.x - 50} y={node.y + size + 8}
+                        width="100" height="28" rx="6"
+                        fill="hsl(220 20% 8% / 0.95)"
+                        stroke="hsl(183 100% 50% / 0.4)"
+                        strokeWidth="1"
                       />
                       <text
-                        x={0} y={node.type === "home" ? 22 : 30}
-                        textAnchor="middle"
-                        fontSize="3"
-                        fill="#00F5FF"
-                        fontFamily="Space Grotesk, Inter, sans-serif"
+                        x={node.x} y={node.y + size + 20}
+                        textAnchor="middle" fontSize="10"
+                        fill="hsl(183 100% 50%)"
+                        fontFamily="'Space Grotesk', monospace"
                       >
-                        {node.label}
+                        ⚡ {node.detail}
                       </text>
                       <text
-                        x={0} y={node.type === "home" ? 26 : 34}
-                        textAnchor="middle"
-                        fontSize="2.2"
-                        fill="hsl(0 0% 50%)"
-                        fontFamily="Inter, sans-serif"
+                        x={node.x} y={node.y + size + 32}
+                        textAnchor="middle" fontSize="8"
+                        fill="hsl(0 0% 45%)"
+                        fontFamily="'Space Grotesk', sans-serif"
                       >
-                        {node.detail}
+                        {node.type === "hub" ? "Core Infrastructure" : node.type === "tower" ? "Relay Point" : "Endpoint"}
                       </text>
                     </g>
                   )}
@@ -199,16 +321,17 @@ const NetworkVisualization = () => {
             })}
           </svg>
 
-          {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-6 mt-6 text-sm text-muted-foreground">
+          {/* Legend bar */}
+          <div className="flex flex-wrap justify-center gap-6 px-6 pb-6 text-sm text-muted-foreground">
             {[
-              { label: "Central Hub", color: "bg-primary" },
-              { label: "Relay Tower", color: "bg-primary/60" },
-              { label: "End User", color: "bg-primary/30" },
+              { label: "Central Hub", icon: "⬡" },
+              { label: "Relay Tower", icon: "◉" },
+              { label: "Endpoint", icon: "●" },
+              { label: "Active Link", icon: "—" },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 rounded-full ${item.color}`} />
-                <span>{item.label}</span>
+                <span className="text-primary text-xs">{item.icon}</span>
+                <span className="font-display text-xs">{item.label}</span>
               </div>
             ))}
           </div>
