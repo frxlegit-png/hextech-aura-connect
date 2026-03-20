@@ -68,7 +68,7 @@ const ProductShowcase = () => {
           </h2>
           <p
             className="mt-2 text-sm md:text-base tracking-wide"
-            style={{ color: "#111", opacity: 0.45, fontFamily: "'DM Mono', monospace", fontWeight: 400 }}
+            style={{ color: "#f2f0eb", opacity: 0.45, fontFamily: "'DM Mono', monospace", fontWeight: 400 }}
           >
             Long-range wireless. Zero compromise.
           </p>
