@@ -20,7 +20,7 @@ const ProductShowcase = () => {
       <div
         className="absolute inset-0 pointer-events-none z-10"
         style={{
-          backgroundImage: "radial-gradient(circle, rgba(17,17,17,0.4) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)",
           backgroundSize: "36px 36px",
         }}
       />
@@ -28,12 +28,12 @@ const ProductShowcase = () => {
       {/* Hero product area */}
       <div
         className="relative min-h-screen flex flex-col items-center justify-center"
-        style={{ backgroundColor: "#f2f0eb" }}
+        style={{ backgroundColor: "#111" }}
       >
         {/* "Meet our flagship product" label */}
         <motion.p
           className="absolute top-12 left-1/2 -translate-x-1/2 text-xs tracking-[0.25em] uppercase z-20"
-          style={{ color: "rgba(17,17,17,0.4)", fontFamily: "'DM Mono', monospace" }}
+          style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'DM Mono', monospace" }}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -62,13 +62,13 @@ const ProductShowcase = () => {
         >
           <h2
             className="text-3xl md:text-5xl lg:text-6xl font-light tracking-tight leading-[1.05]"
-            style={{ color: "#111", fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}
+            style={{ color: "#f2f0eb", fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}
           >
             Hextech CPE
           </h2>
           <p
             className="mt-2 text-sm md:text-base tracking-wide"
-            style={{ color: "#111", opacity: 0.45, fontFamily: "'DM Mono', monospace", fontWeight: 400 }}
+            style={{ color: "#f2f0eb", opacity: 0.45, fontFamily: "'DM Mono', monospace", fontWeight: 400 }}
           >
             Long-range wireless. Zero compromise.
           </p>
