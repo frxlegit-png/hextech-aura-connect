@@ -20,7 +20,7 @@ const ProductShowcase = () => {
       <div
         className="absolute inset-0 pointer-events-none z-10"
         style={{
-          backgroundImage: "radial-gradient(circle, rgba(17,17,17,0.4) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1px)",
           backgroundSize: "36px 36px",
         }}
       />
