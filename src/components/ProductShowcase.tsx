@@ -28,7 +28,7 @@ const ProductShowcase = () => {
       {/* Hero product area */}
       <div
         className="relative min-h-screen flex flex-col items-center justify-center"
-        style={{ backgroundColor: "#f2f0eb" }}
+        style={{ backgroundColor: "#111" }}
       >
         {/* "Meet our flagship product" label */}
         <motion.p
