@@ -33,7 +33,7 @@ const ProductShowcase = () => {
         {/* "Meet our flagship product" label */}
         <motion.p
           className="absolute top-12 left-1/2 -translate-x-1/2 text-xs tracking-[0.25em] uppercase z-20"
-          style={{ color: "rgba(17,17,17,0.4)", fontFamily: "'DM Mono', monospace" }}
+          style={{ color: "rgba(255,255,255,0.4)", fontFamily: "'DM Mono', monospace" }}
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
