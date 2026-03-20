@@ -62,7 +62,7 @@ const ProductShowcase = () => {
         >
           <h2
             className="text-3xl md:text-5xl lg:text-6xl font-light tracking-tight leading-[1.05]"
-            style={{ color: "#111", fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}
+            style={{ color: "#f2f0eb", fontFamily: "'DM Sans', sans-serif", fontWeight: 300 }}
           >
             Hextech CPE
           </h2>
