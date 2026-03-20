@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import heroImage from "@/assets/hextech-equipment.jpeg";
+import heroImage from "@/assets/hextech-equipment.png";
 
 const ProductShowcase = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
