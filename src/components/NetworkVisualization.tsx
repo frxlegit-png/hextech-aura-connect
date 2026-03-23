@@ -36,23 +36,7 @@ const NetworkVisualization = () => {
             height: "400px",
           }}
         >
-          <Antigravity
-            count={300}
-            magnetRadius={36}
-            ringRadius={10}
-            waveSpeed={2.2}
-            waveAmplitude={1}
-            particleSize={1.5}
-            lerpSpeed={0.05}
-            color="#01c7fc"
-            autoAnimate
-            particleVariance={1}
-            rotationSpeed={0}
-            depthFactor={1}
-            pulseSpeed={3}
-            particleShape="capsule"
-            fieldStrength={10}
-          />
+          <CityNetworkCanvas />
         </motion.div>
       </div>
     </section>
