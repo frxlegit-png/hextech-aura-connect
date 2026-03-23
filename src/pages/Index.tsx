@@ -23,7 +23,7 @@ const Index = () => {
         <main>
           <HeroSection />
           <Suspense fallback={null}>
-            <ScrollStorytelling />
+            
             <ProductShowcase />
             <AboutSection />
             <ServicesSection />
