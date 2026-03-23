@@ -4,7 +4,6 @@ import HeroSection from "@/components/HeroSection";
 import SmoothScroll from "@/components/SmoothScroll";
 import CursorGlow from "@/components/CursorGlow";
 
-const ScrollStorytelling = lazy(() => import("@/components/ScrollStorytelling"));
 const ProductShowcase = lazy(() => import("@/components/ProductShowcase"));
 const AboutSection = lazy(() => import("@/components/AboutSection"));
 const ServicesSection = lazy(() => import("@/components/ServicesSection"));
