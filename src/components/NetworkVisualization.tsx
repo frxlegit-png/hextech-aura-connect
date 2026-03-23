@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import Antigravity from "./Antigravity";
+import CityNetworkCanvas from "./CityNetworkCanvas";
 
 const NetworkVisualization = () => {
   const ref = useRef<HTMLDivElement>(null);
