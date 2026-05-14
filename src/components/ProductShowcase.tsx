@@ -68,18 +68,21 @@ const ProductShowcase = () => {
           </motion.p>
 
           <motion.div
-            className="flex items-center justify-center px-6"
+            className="flex items-center justify-center gap-4 md:gap-10 px-6 flex-wrap"
             initial={{ opacity: 0, scale: 0.85 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.9, ease: [0.25, 0.4, 0.25, 1] }}
           >
-            <img
-              src={p.image}
-              alt={p.alt}
-              className="max-h-[70vh] w-auto object-contain"
-              loading="lazy"
-            />
+            {p.images.map((img) => (
+              <img
+                key={img.src}
+                src={img.src}
+                alt={img.alt}
+                className={`${p.images.length > 1 ? "max-h-[55vh] md:max-h-[65vh]" : "max-h-[70vh]"} w-auto object-contain`}
+                loading="lazy"
+              />
+            ))}
           </motion.div>
 
           <motion.div
