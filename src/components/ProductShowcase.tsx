@@ -79,8 +79,8 @@ const ProductShowcase = () => {
                 key={img.src}
                 src={img.src}
                 alt={img.alt}
-                className={`${p.images.length > 1 ? "max-h-[45vh] md:max-h-[55vh]" : "max-h-[70vh]"} w-auto object-contain`}
-                style={p.images.length > 1 && i > 0 ? { marginLeft: "-8%" } : undefined}
+                className={`${p.images.length > 1 ? "max-h-[35vh] md:max-h-[50vh] max-w-[45%]" : "max-h-[70vh]"} w-auto object-contain`}
+                style={p.images.length > 1 && i > 0 ? { marginLeft: "-15%" } : undefined}
                 loading="lazy"
               />
             ))}
