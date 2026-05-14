@@ -80,7 +80,7 @@ const ProductShowcase = () => {
                 src={img.src}
                 alt={img.alt}
                 className={`${p.images.length > 1 ? "max-h-[55vh] md:max-h-[65vh]" : "max-h-[70vh]"} w-auto object-contain`}
-                style={p.images.length > 1 && i > 0 ? { marginLeft: "-15%" } : undefined}
+                style={p.images.length > 1 && i > 0 ? { marginLeft: "-28%" } : undefined}
                 loading="lazy"
               />
             ))}
