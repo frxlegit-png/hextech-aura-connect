@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
 import heroImage from "@/assets/hextech-equipment.png";
 import acStationImage from "@/assets/hextech-ac-station.png";
+import gen2Front from "@/assets/hextech-gen2-ac-front.png";
+import gen2Back from "@/assets/hextech-gen2-ac-back.png";
 
 type Product = {
   label: string;
-  image: string;
-  alt: string;
+  images: { src: string; alt: string }[];
   name: string;
   tagline: string;
 };
@@ -13,17 +14,28 @@ type Product = {
 const products: Product[] = [
   {
     label: "Meet our flagship product",
-    image: heroImage,
-    alt: "Hextech wireless equipment — outdoor CPE unit front and back view",
+    images: [
+      { src: heroImage, alt: "Hextech wireless equipment — outdoor CPE unit front and back view" },
+    ],
     name: "Hextech CPE",
     tagline: "Long-range wireless. Zero compromise.",
   },
   {
     label: "New in the WiFi Kits lineup",
-    image: acStationImage,
-    alt: "Hextech new generation AC client station — outdoor wireless unit",
+    images: [
+      { src: acStationImage, alt: "Hextech new generation AC client station — outdoor wireless unit" },
+    ],
     name: "AC Client Station",
     tagline: "New gen AC. Built for every home.",
+  },
+  {
+    label: "Also in the WiFi Kits lineup",
+    images: [
+      { src: gen2Front, alt: "Hextech Gen 2 AC client station — front view" },
+      { src: gen2Back, alt: "Hextech Gen 2 AC client station — rear view" },
+    ],
+    name: "Gen 2 AC Client Station",
+    tagline: "Refined. Reinforced. Ready.",
   },
 ];
 
