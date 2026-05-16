@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Check, Zap, Star, Shield } from "lucide-react";
+import { Check, Zap, Star, Shield, Package, Cable, Router, Radio } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
