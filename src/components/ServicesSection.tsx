@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Check, Zap, Star, Shield } from "lucide-react";
+import { Check, Zap, Star, Shield, Package, Cable, Router, Radio } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 
@@ -12,7 +12,7 @@ const ServicesSection = () => {
     "High-speed wireless connection",
     "Low latency for gaming & streaming",
     "24/7 network monitoring",
-    "Free equipment loan (company-owned)",
+    "Own your equipment — no rental fees, ever",
     "No setup fees",
     "Free professional installation",
     "Dedicated customer support",
@@ -104,7 +104,7 @@ const ServicesSection = () => {
             </motion.div>
           </motion.div>
 
-          {/* Equipment Insurance Card */}
+          {/* Starter Kit Card */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -116,30 +116,30 @@ const ServicesSection = () => {
               transition={{ duration: 0.4 }}
             >
               <div className="absolute -top-0 left-1/2 -translate-x-1/2 z-10">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-semibold shadow-lg font-display">
-                  <Shield className="w-3.5 h-3.5" />
-                  Required
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-lg font-display">
+                  <Package className="w-3.5 h-3.5" />
+                  Starter Kit
                 </div>
               </div>
 
               <div className="text-center mb-8 pt-4">
-                <h3 className="text-2xl font-bold text-foreground mb-2 font-display">Equipment Insurance</h3>
-                <p className="text-muted-foreground mb-6">Mandatory cover for your loaned equipment</p>
+                <h3 className="text-2xl font-bold text-foreground mb-2 font-display">Complete Starter Kit</h3>
+                <p className="text-muted-foreground mb-6">Everything you need to get online — yours to keep</p>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl md:text-6xl font-bold text-foreground font-display">$24.99</span>
+                  <span className="text-5xl md:text-6xl font-bold text-foreground font-display">$79.99</span>
                   <span className="text-xl text-muted-foreground">one-time</span>
                 </div>
               </div>
 
               <div className="space-y-4 mb-8 flex-grow">
                 {[
-                  "Covers damage to company-owned equipment",
-                  "Protection against accidental damage",
-                  "Lightning & surge protection",
-                  "24-hour replacement guarantee",
-                  "No deductibles or hidden fees",
-                  "Transferable if you move",
-                ].map((benefit, index) => (
+                  { icon: Radio, text: "AC Client Station — outdoor receiver" },
+                  { icon: Router, text: "300 Mbps indoor Wi-Fi router" },
+                  { icon: Cable, text: "Outdoor-grade Ethernet cable" },
+                  { icon: Check, text: "Yours to keep — no rental, no returns" },
+                  { icon: Check, text: "Professional installation included" },
+                  { icon: Check, text: "Backed by our hardware warranty" },
+                ].map((item, index) => (
                   <motion.div
                     key={index}
                     className="flex items-center gap-3"
@@ -147,10 +147,10 @@ const ServicesSection = () => {
                     animate={isInView ? { opacity: 1, x: 0 } : {}}
                     transition={{ delay: 0.5 + index * 0.08 }}
                   >
-                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/15 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-green-500" />
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                      <item.icon className="w-3 h-3 text-primary" />
                     </div>
-                    <span className="text-sm text-muted-foreground">{benefit}</span>
+                    <span className="text-sm text-muted-foreground">{item.text}</span>
                   </motion.div>
                 ))}
               </div>
@@ -158,14 +158,14 @@ const ServicesSection = () => {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button variant="heroOutline" size="xl" className="w-full" asChild>
                   <a href="#contact" className="flex items-center justify-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    Get Started
+                    <Package className="w-5 h-5" />
+                    Order Your Kit
                   </a>
                 </Button>
               </motion.div>
 
               <p className="text-center text-xs text-muted-foreground mt-6">
-                One-time payment required at signup. Covers all loaned equipment.
+                One-time $79.99 at signup. Equipment is yours — no monthly rental fees.
               </p>
             </motion.div>
           </motion.div>
