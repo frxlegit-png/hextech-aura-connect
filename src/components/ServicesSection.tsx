@@ -12,7 +12,7 @@ const ServicesSection = () => {
     "High-speed wireless connection",
     "Low latency for gaming & streaming",
     "24/7 network monitoring",
-    "Free equipment loan (company-owned)",
+    "Own your equipment — no rental fees, ever",
     "No setup fees",
     "Free professional installation",
     "Dedicated customer support",
