@@ -68,22 +68,40 @@ const ProductShowcase = () => {
           </motion.p>
 
           <motion.div
-            className="flex items-center justify-center px-6"
+            className={`${p.images.length > 1 ? "w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-0" : "flex items-center justify-center"} px-6`}
             initial={{ opacity: 0, scale: 0.85 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.9, ease: [0.25, 0.4, 0.25, 1] }}
           >
-            {p.images.map((img, i) => (
-              <img
-                key={img.src}
-                src={img.src}
-                alt={img.alt}
-                className={`${p.images.length > 1 ? "max-h-[55vh] md:max-h-[65vh]" : "max-h-[70vh]"} w-auto object-contain`}
-                style={p.images.length > 1 && i > 0 ? { marginLeft: "-28%" } : undefined}
-                loading="lazy"
-              />
-            ))}
+            {p.images.map((img, i) => {
+              if (p.images.length > 1) {
+                return (
+                  <div key={img.src} className="relative w-full flex items-center justify-center">
+                    <img
+                      src={img.src}
+                      alt={img.alt}
+                      className="w-full h-[320px] md:h-[400px] object-contain"
+                      style={i > 0 ? { marginLeft: undefined } : undefined}
+                      loading="lazy"
+                    />
+                    <div
+                      className="pointer-events-none absolute inset-x-0 bottom-0 h-16"
+                      style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.7))" }}
+                    />
+                  </div>
+                );
+              }
+              return (
+                <img
+                  key={img.src}
+                  src={img.src}
+                  alt={img.alt}
+                  className="max-h-[70vh] w-auto object-contain"
+                  loading="lazy"
+                />
+              );
+            })}
           </motion.div>
 
           <motion.div
