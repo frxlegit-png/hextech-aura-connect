@@ -8,7 +8,7 @@ const WhyChooseSection = () => {
 
   const benefits = [
     { icon: DollarSign, title: "No Setup Fees", description: "Get started without any upfront costs. We believe in making connectivity accessible to everyone." },
-    { icon: Shield, title: "Free Equipment Loan", description: "We provide all equipment at no cost — it remains our property, so you never worry about buying or replacing hardware." },
+    { icon: Shield, title: "Own Your Equipment", description: "One-time $79.99 starter kit and the hardware is yours to keep — no rental fees, no surprise charges, ever." },
     { icon: TrendingUp, title: "Reliable Uptime", description: "Our network maintains 99.9% uptime with redundant systems ensuring you stay connected." },
     { icon: HeadphonesIcon, title: "Fast Support", description: "Our dedicated support team is available to help you with any issues, anytime." },
     { icon: Wifi, title: "Scalable Network", description: "As your needs grow, our network grows with you. Upgrade seamlessly without interruption." },
