@@ -54,7 +54,7 @@ const ProductShowcase = () => {
       {products.map((p) => (
         <div
           key={p.name}
-          className="relative min-h-screen flex flex-col items-center justify-center"
+          className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-40 md:py-0"
         >
           <motion.p
             className="absolute top-12 left-1/2 -translate-x-1/2 text-xs tracking-[0.25em] uppercase z-20 text-center px-6"
@@ -68,7 +68,7 @@ const ProductShowcase = () => {
           </motion.p>
 
           <motion.div
-            className={`${p.images.length > 1 ? "w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-0" : "flex items-center justify-center"} px-6`}
+            className={`${p.images.length > 1 ? "w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-0 mb-8 md:mb-0" : "flex items-center justify-center"} px-6`}
             initial={{ opacity: 0, scale: 0.85 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, margin: "-100px" }}
@@ -77,12 +77,11 @@ const ProductShowcase = () => {
             {p.images.map((img, i) => {
               if (p.images.length > 1) {
                 return (
-                  <div key={img.src} className="relative w-full flex items-center justify-center">
+                  <div key={img.src} className="relative w-full overflow-hidden h-[280px] md:h-[400px]">
                     <img
                       src={img.src}
                       alt={img.alt}
-                      className="w-full h-[320px] md:h-[400px] object-contain"
-                      style={i > 0 ? { marginLeft: undefined } : undefined}
+                      className="w-full h-full object-contain object-center"
                       loading="lazy"
                     />
                     <div
