@@ -67,7 +67,7 @@ const ServicesSection = () => {
                 <h3 className="text-2xl font-bold text-foreground mb-2 font-display">Unlimited Plan</h3>
                 <p className="text-muted-foreground mb-6">Everything you need, nothing you don't</p>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl md:text-6xl font-bold text-foreground font-display">$29.99</span>
+                  <span className="text-5xl md:text-6xl font-bold text-foreground font-display">$24.99</span>
                   <span className="text-xl text-muted-foreground">/month</span>
                 </div>
               </div>
