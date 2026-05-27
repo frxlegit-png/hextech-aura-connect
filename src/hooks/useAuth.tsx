@@ -8,6 +8,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isCustomer: boolean;
   isLoading: boolean;
+  rolesChecked: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isCustomer, setIsCustomer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [rolesChecked, setRolesChecked] = useState(false);
 
   const checkRoles = async (userId: string) => {
     const { data, error } = await supabase
@@ -35,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAdmin(false);
       setIsCustomer(false);
     }
+    setRolesChecked(true);
   };
 
   useEffect(() => {
@@ -43,10 +46,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        setRolesChecked(false);
         setTimeout(() => checkRoles(session.user.id), 0);
       } else {
         setIsAdmin(false);
         setIsCustomer(false);
+        setRolesChecked(true);
       }
       setIsLoading(false);
     });
@@ -56,6 +61,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkRoles(session.user.id);
+      } else {
+        setRolesChecked(true);
       }
       setIsLoading(false);
     });
@@ -90,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, isCustomer, isLoading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, isCustomer, isLoading, rolesChecked, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
