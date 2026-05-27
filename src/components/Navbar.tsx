@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "@/components/Logo";
 
@@ -65,11 +66,17 @@ const Navbar = () => {
 
         {/* CTA Button */}
         <motion.div
-          className="hidden md:block"
+          className="hidden md:flex items-center gap-3"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.4 }}
         >
+          <Link
+            to="/auth"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 font-display flex items-center gap-1.5"
+          >
+            <LogIn size={14} /> Sign In
+          </Link>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button variant="hero" size="default" asChild>
               <a href="#contact">Get Connected</a>
@@ -122,9 +129,18 @@ const Navbar = () => {
                   {link.label}
                 </motion.a>
               ))}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28, duration: 0.3 }}>
+                <Link
+                  to="/auth"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-lg text-muted-foreground hover:text-foreground transition-colors py-2 font-display"
+                >
+                  <LogIn size={18} /> Sign In
+                </Link>
+              </motion.div>
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.3 }}>
-                <Button variant="hero" size="lg" className="mt-4 w-full" asChild>
-                  <a href="#contact">Get Connected</a>
+                <Button variant="hero" size="lg" className="mt-2 w-full" asChild>
+                  <a href="#contact" onClick={() => setIsMobileMenuOpen(false)}>Get Connected</a>
                 </Button>
               </motion.div>
             </div>
