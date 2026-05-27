@@ -10,7 +10,6 @@ const Footer = () => {
       { label: "About Us", href: "#about" },
       { label: "Coverage", href: "#coverage" },
       { label: "Careers", href: "#" },
-      { label: "Admin Login", href: "/auth" },
     ],
     services: [
       { label: "Residential", href: "#services" },

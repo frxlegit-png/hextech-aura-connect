@@ -5,8 +5,9 @@ import { HexBadge } from '@/components/hex/HexBadge';
 import { HexCard } from '@/components/hex/HexCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Users, FileText, LifeBuoy, BarChart3, DollarSign, Wifi, Settings, Home } from 'lucide-react';
+import { LogOut, Users, FileText, LifeBuoy, BarChart3, DollarSign, Wifi, Settings, Home, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { RoleManager } from '@/components/admin/RoleManager';
 
 const KPIS = [
   { label: 'Active Subscribers', value: '247', delta: '+12 this month', icon: Users, accent: 'text-primary' },
@@ -98,10 +99,11 @@ const AdminPanel = () => {
           </div>
 
           <Tabs defaultValue="customers" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="customers"><Users className="w-4 h-4 mr-2" />Customers</TabsTrigger>
               <TabsTrigger value="invoices"><FileText className="w-4 h-4 mr-2" />Invoices</TabsTrigger>
               <TabsTrigger value="tickets"><LifeBuoy className="w-4 h-4 mr-2" />Support</TabsTrigger>
+              <TabsTrigger value="roles"><ShieldCheck className="w-4 h-4 mr-2" />Access</TabsTrigger>
             </TabsList>
 
             <TabsContent value="customers">
@@ -152,6 +154,10 @@ const AdminPanel = () => {
                 ]}
                 data={TICKETS as any}
               />
+            </TabsContent>
+
+            <TabsContent value="roles">
+              <RoleManager />
             </TabsContent>
           </Tabs>
         </motion.div>
