@@ -8,16 +8,16 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, user, isAdmin, isCustomer, isLoading } = useAuth();
+  const { signIn, user, isAdmin, isCustomer, isLoading, rolesChecked } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && user && rolesChecked) {
       if (isAdmin) navigate('/admin');
       else if (isCustomer) navigate('/portal');
       else navigate('/');
     }
-  }, [user, isAdmin, isCustomer, isLoading, navigate]);
+  }, [user, isAdmin, isCustomer, isLoading, rolesChecked, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

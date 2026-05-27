@@ -7,9 +7,9 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
-  const { user, isAdmin, isCustomer, isLoading } = useAuth();
+  const { user, isAdmin, isCustomer, isLoading, rolesChecked } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || (user && !rolesChecked)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-primary">Loading...</div>
@@ -21,7 +21,6 @@ export function ProtectedRoute({ children, role }: ProtectedRouteProps) {
 
   const allowed = role === 'admin' ? isAdmin : isCustomer;
   if (!allowed) {
-    // Send admin to admin, customer to portal, otherwise home
     if (isAdmin) return <Navigate to="/admin" replace />;
     if (isCustomer) return <Navigate to="/portal" replace />;
     return <Navigate to="/" replace />;
