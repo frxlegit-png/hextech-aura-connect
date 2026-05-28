@@ -56,8 +56,12 @@ export type Database = {
           billing_end: string | null
           billing_start: string | null
           created_at: string
+          frequency: string | null
+          ip_address: string | null
           monthly_fee: number
           password_plain: string | null
+          signal_strength: string | null
+          station_model: string | null
           updated_at: string
           user_id: string
         }
@@ -69,8 +73,12 @@ export type Database = {
           billing_end?: string | null
           billing_start?: string | null
           created_at?: string
+          frequency?: string | null
+          ip_address?: string | null
           monthly_fee?: number
           password_plain?: string | null
+          signal_strength?: string | null
+          station_model?: string | null
           updated_at?: string
           user_id: string
         }
@@ -82,8 +90,12 @@ export type Database = {
           billing_end?: string | null
           billing_start?: string | null
           created_at?: string
+          frequency?: string | null
+          ip_address?: string | null
           monthly_fee?: number
           password_plain?: string | null
+          signal_strength?: string | null
+          station_model?: string | null
           updated_at?: string
           user_id?: string
         }

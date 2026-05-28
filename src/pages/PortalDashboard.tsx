@@ -24,6 +24,10 @@ interface BillingData {
   account_state: AccountState;
   balance: number;
   monthly_fee: number;
+  signal_strength: string | null;
+  station_model: string | null;
+  ip_address: string | null;
+  frequency: string | null;
 }
 
 function formatDate(d: Date | string | null) {
@@ -48,7 +52,7 @@ export default function PortalDashboard() {
     if (!user) return;
     const load = async () => {
       const [{ data: bill }, { data: profile }, { data: pays }, { data: invs }] = await Promise.all([
-        supabase.from('customer_billing').select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee' as any).eq('user_id', user.id).maybeSingle(),
+        supabase.from('customer_billing').select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee, signal_strength, station_model, ip_address, frequency' as any).eq('user_id', user.id).maybeSingle(),
         supabase.from('profiles').select('full_name, email, phone').eq('user_id', user.id).maybeSingle(),
         (supabase.from('payment_history' as any) as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(20),
         (supabase.from('invoices' as any) as any).select('*').eq('user_id', user.id).order('invoice_date', { ascending: false }),
@@ -248,25 +252,26 @@ export default function PortalDashboard() {
           <div className="panel">
             <div className="panel-title">// Equipment</div>
             <div className="equip-header">
-              <div className="equip-name">Gen 2 AC Client Station</div>
+              <div className="equip-name">{billing?.station_model || 'Gen 2 AC Client Station'}</div>
             </div>
             <div className="signal-wrap">
               <div className="signal-label">Signal Strength</div>
               <div className="signal-row">
                 <div className="signal-bars">
-                  <div className="bar active" />
-                  <div className="bar active" />
-                  <div className="bar active" />
-                  <div className="bar active" />
-                  <div className="bar" />
+                  {(() => {
+                    const dbm = parseInt(String(billing?.signal_strength ?? '-62').replace(/[^\-\d]/g, ''), 10) || -62;
+                    // -50 strong → 5 bars; -90 weak → 1 bar
+                    const bars = Math.max(1, Math.min(5, Math.round((dbm + 95) / 10)));
+                    return [0,1,2,3,4].map(i => <div key={i} className={`bar ${i < bars ? 'active' : ''}`} />);
+                  })()}
                 </div>
-                <div className="signal-val">-62 dBm</div>
+                <div className="signal-val">{billing?.signal_strength || '-62 dBm'}</div>
               </div>
             </div>
-            <Row k="Device" v="Gen 2 AC Station" />
+            <Row k="Device" v={billing?.station_model || 'Gen 2 AC Station'} />
             <Row k="Router" v="300 Mbps Indoor AP" />
-            <Row k="IP Address" v="192.168.1.105" vClass="cyan" />
-            <Row k="Frequency" v="5 GHz" />
+            <Row k="IP Address" v={billing?.ip_address || '192.168.1.105'} vClass="cyan" />
+            <Row k="Frequency" v={billing?.frequency || '5 GHz'} />
           </div>
         </div>
 
