@@ -29,6 +29,7 @@ function fmt(d: string) {
 
 export function SupportTickets({ userId, customerName }: Props) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [active, setActive] = useState<Ticket | null>(null);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -106,19 +107,54 @@ export function SupportTickets({ userId, customerName }: Props) {
         ) : (
           <div className="ticket-list">
             {tickets.map((t) => (
-              <div key={t.id} className="ticket-item">
+              <div
+                key={t.id}
+                className="ticket-item"
+                role="button"
+                tabIndex={0}
+                onClick={() => setActive(t)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(t); } }}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className="ticket-row">
                   <div className="ticket-code">{t.ticket_code ?? t.id.slice(0, 6)}</div>
                   <span className={pillClass(t.status)}>{t.status.toUpperCase()}</span>
                 </div>
                 <div className="ticket-subject">{t.subject}</div>
-                {t.message && <div className="ticket-msg">{t.message}</div>}
+                {t.message && <div className="ticket-msg" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.message}</div>}
                 <div className="ticket-date">{fmt(t.created_at)}</div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {active && (
+        <div className="hx-modal-overlay" onClick={() => setActive(null)}>
+          <div className="hx-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="hx-modal-close" onClick={() => setActive(null)} aria-label="Close">×</button>
+            <div className="hx-modal-title">{active.ticket_code ?? active.id.slice(0, 8)}</div>
+            <p className="hx-modal-sub">{fmt(active.created_at)}</p>
+
+            <div className="hx-pay-list">
+              <div className="hx-pay-block">
+                <div className="hx-pay-label">Subject</div>
+                <div className="ticket-subject" style={{ marginBottom: 0 }}>{active.subject}</div>
+              </div>
+              <div className="hx-pay-block">
+                <div className="hx-pay-label">Message</div>
+                <div className="ticket-msg" style={{ marginBottom: 0, color: 'rgba(255,255,255,0.75)' }}>
+                  {active.message || 'No message provided.'}
+                </div>
+              </div>
+              <div className="hx-pay-block">
+                <div className="hx-pay-label">Status</div>
+                <span className={pillClass(active.status)}>{active.status.toUpperCase()}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
