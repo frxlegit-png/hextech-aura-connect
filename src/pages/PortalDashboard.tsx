@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { RenewModal } from '@/components/portal/RenewModal';
+import { SupportTickets } from '@/components/portal/SupportTickets';
 import {
   daysRemaining as calcDaysRemaining,
   nextBillingDate,
