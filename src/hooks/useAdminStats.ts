@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { effectiveState } from '@/lib/billing';
+import { effectiveStateWithPaid } from '@/lib/billing';
 
 export interface AdminStats {
   activeSubscribers: number;
