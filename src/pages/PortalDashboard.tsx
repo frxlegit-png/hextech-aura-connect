@@ -224,11 +224,6 @@ export default function PortalDashboard() {
             <div className="sc-value cyan" style={{ fontSize: 22, marginTop: 5 }}>Residential</div>
             <div className="sc-sub">Unlimited 4G LTE</div>
           </div>
-          <div className="stat-card c-cyan">
-            <div className="sc-label">Equipment</div>
-            <div className="sc-value cyan" style={{ fontSize: 16, marginTop: 8 }}>Gen 2 AC Station</div>
-            <div className="sc-sub">Customer-owned</div>
-          </div>
           <div className="stat-card c-amber">
             <div className="sc-label">Outstanding Balance</div>
             <div className={`sc-value ${cfg.balance.color}`} style={{ fontSize: 24, marginTop: 4 }}>{cfg.balance.value}</div>
