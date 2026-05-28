@@ -89,6 +89,33 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_revenue: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          logged_by: string | null
+          month: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          logged_by?: string | null
+          month: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          logged_by?: string | null
+          month?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           bank_account: string | null
@@ -200,6 +227,42 @@ export type Database = {
           subtitle?: string | null
           title?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      tickets: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          id: string
+          message: string | null
+          status: string
+          subject: string
+          ticket_code: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          subject: string
+          ticket_code?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          message?: string | null
+          status?: string
+          subject?: string
+          ticket_code?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
