@@ -22,15 +22,25 @@ const ContactSection = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
+    const lines = [
+      "Hi Hextech, I'd like to request an installation.",
+      "",
+      `Name: ${formData.name}`,
+      `Email: ${formData.email}`,
+      formData.phone ? `Phone: ${formData.phone}` : null,
+      "",
+      `Message: ${formData.message}`,
+    ].filter(Boolean).join("\n");
+
+    const url = `https://wa.me/263783800102?text=${encodeURIComponent(lines)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+
     toast({
-      title: "Request Submitted!",
-      description: "We'll get back to you within 24 hours.",
+      title: "Opening WhatsApp",
+      description: "Send the message to complete your request.",
     });
-    
+
     setFormData({ name: "", email: "", phone: "", message: "" });
     setIsSubmitting(false);
   };
