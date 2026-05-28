@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Users, FileText, LifeBuoy, BarChart3, DollarSign, Wifi, Settings, Home, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { RoleManager } from '@/components/admin/RoleManager';
+import { CustomerManager } from '@/components/admin/CustomerManager';
+import { PaymentSettingsManager } from '@/components/admin/PaymentSettingsManager';
+import { Wallet } from 'lucide-react';
 
 const KPIS = [
   { label: 'Active Subscribers', value: '247', delta: '+12 this month', icon: Users, accent: 'text-primary' },
