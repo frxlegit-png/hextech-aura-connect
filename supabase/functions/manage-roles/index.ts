@@ -81,7 +81,14 @@ Deno.serve(async (req) => {
         user_metadata: { full_name: fullName },
       });
       if (createErr) {
-        return new Response(JSON.stringify({ error: createErr.message }), {
+        const raw = createErr.message ?? 'Could not create user';
+        const friendly =
+          /pwned|leaked|compromis|weak|breach|hibp/i.test(raw)
+            ? 'This password has been found in a known data breach. Choose a stronger, unique password.'
+            : /already.*registered|exists/i.test(raw)
+            ? 'A user with that email already exists.'
+            : raw;
+        return new Response(JSON.stringify({ error: friendly }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
