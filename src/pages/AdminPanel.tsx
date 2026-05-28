@@ -42,12 +42,13 @@ const AdminPanel = () => {
 
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [ticketFilter, setTicketFilter] = useState<'all' | 'pending' | 'opened' | 'resolved'>('all');
+  const [openTicket, setOpenTicket] = useState<TicketRow | null>(null);
 
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
         .from('tickets')
-        .select('id, ticket_code, customer_name, subject, status, created_at')
+        .select('id, ticket_code, customer_name, subject, message, status, created_at')
         .order('created_at', { ascending: false });
       if (data) setTickets(data as TicketRow[]);
     };
