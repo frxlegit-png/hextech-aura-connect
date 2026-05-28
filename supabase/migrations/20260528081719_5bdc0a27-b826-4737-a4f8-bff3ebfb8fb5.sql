@@ -1,0 +1,1 @@
+ALTER TABLE public.customer_billing ADD COLUMN IF NOT EXISTS billing_day smallint CHECK (billing_day BETWEEN 1 AND 28);
