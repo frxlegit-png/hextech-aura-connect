@@ -47,12 +47,76 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_billing: {
+        Row: {
+          account_id: string | null
+          account_state: string
+          balance: number
+          billing_end: string | null
+          billing_start: string | null
+          created_at: string
+          monthly_fee: number
+          password_plain: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id?: string | null
+          account_state?: string
+          balance?: number
+          billing_end?: string | null
+          billing_start?: string | null
+          created_at?: string
+          monthly_fee?: number
+          password_plain?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string | null
+          account_state?: string
+          balance?: number
+          billing_end?: string | null
+          billing_start?: string | null
+          created_at?: string
+          monthly_fee?: number
+          password_plain?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      payment_settings: {
+        Row: {
+          bank_account: string | null
+          ecocash: string | null
+          id: string
+          omari: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account?: string | null
+          ecocash?: string | null
+          id?: string
+          omari?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account?: string | null
+          ecocash?: string | null
+          id?: string
+          omari?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           email: string | null
           full_name: string | null
           id: string
+          phone: string | null
           updated_at: string
           user_id: string
         }
@@ -61,6 +125,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id: string
         }
@@ -69,6 +134,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
