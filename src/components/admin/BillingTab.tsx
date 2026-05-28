@@ -203,8 +203,8 @@ export function BillingTab() {
                   className="border-b border-border/40 hover:bg-muted/40 animate-in fade-in slide-in-from-bottom-1"
                   style={{ animationDelay: `${i * 30}ms`, animationFillMode: 'both' }}
                 >
+                  <td className="px-3 py-2.5 font-medium">{c.full_name ?? c.email ?? '—'}</td>
                   <td className="px-3 py-2.5 font-mono text-primary text-xs">{c.account_id ?? '—'}</td>
-                  <td className="px-3 py-2.5">{c.full_name ?? c.email ?? '—'}</td>
                   <td className="px-3 py-2.5 text-muted-foreground">Residential Unlimited</td>
                   <td className="px-3 py-2.5 text-right font-mono">${c.monthly_fee.toFixed(2)}</td>
                   <td className="px-3 py-2.5 text-right font-mono">
