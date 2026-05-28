@@ -196,8 +196,9 @@ export default function PortalDashboard() {
           <div className="panel">
             <div className="panel-title">// Subscription</div>
             <Row k="Plan" v="Residential Unlimited" vClass="cyan" />
-            <Row k="Start Date" v={formatDate(billing?.billing_start ?? null)} />
-            <Row k="Renewal Date" v={formatDate(billing?.billing_end ?? null)} vClass="purple" />
+            <Row k="Start Date" v={formatDate(cycleStartDate)} />
+            <Row k="Renewal Date" v={formatDate(renewalDate)} vClass="purple" />
+
             <Row k="Monthly Fee" v={`USD ${monthly}`} />
             <Row k="Payment Method" v="EcoCash" vClass="green" />
             <Row k="Status" v={cfg.subStatus.text} vClass={cfg.subStatus.color} />
