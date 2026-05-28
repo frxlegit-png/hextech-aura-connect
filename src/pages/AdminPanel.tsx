@@ -27,6 +27,7 @@ interface TicketRow {
   ticket_code: string | null;
   customer_name: string | null;
   subject: string;
+  message: string | null;
   status: string;
   created_at: string;
 }
