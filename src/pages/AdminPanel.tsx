@@ -247,7 +247,7 @@ const AdminPanel = () => {
                     render: (r: any) => {
                       const s = (r.status || '').toLowerCase();
                       return (
-                        <div className="flex gap-1 justify-end">
+                        <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
                           {s !== 'opened' && <Button size="sm" variant="ghost" onClick={() => updateTicket(r.id, 'opened')}>Open</Button>}
                           {s !== 'resolved' && <Button size="sm" variant="ghost" onClick={() => updateTicket(r.id, 'resolved')}>Resolve</Button>}
                         </div>
@@ -256,6 +256,7 @@ const AdminPanel = () => {
                   },
                 ]}
                 data={filteredTickets as any}
+                onRowClick={(r: any) => setOpenTicket(r)}
               />
             </TabsContent>
 
@@ -265,6 +266,60 @@ const AdminPanel = () => {
           </Tabs>
         </motion.div>
       </main>
+
+      <Dialog open={!!openTicket} onOpenChange={(o) => !o && setOpenTicket(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-mono tracking-[0.15em] text-primary text-sm">
+              {openTicket?.ticket_code ?? openTicket?.id.slice(0, 8)}
+            </DialogTitle>
+          </DialogHeader>
+          {openTicket && (
+            <div className="space-y-4">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Customer</div>
+                <div className="text-sm text-foreground">{openTicket.customer_name ?? '—'}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Subject</div>
+                <div className="text-base font-semibold text-foreground">{openTicket.subject}</div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Message</div>
+                <div className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed border border-border rounded-md p-3 bg-muted/30 max-h-72 overflow-y-auto">
+                  {openTicket.message || <span className="italic text-muted-foreground">No message provided.</span>}
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Status</div>
+                  <HexBadge variant={((openTicket.status || '').toLowerCase() === 'opened' ? 'opened' : (openTicket.status || '').toLowerCase() === 'resolved' ? 'resolved' : 'pending') as any}>
+                    {openTicket.status.toUpperCase()}
+                  </HexBadge>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Opened</div>
+                  <div className="text-xs font-mono text-foreground">
+                    {new Date(openTicket.created_at).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-2">
+                {(openTicket.status || '').toLowerCase() !== 'opened' && (
+                  <Button size="sm" variant="outline" onClick={async () => { await updateTicket(openTicket.id, 'opened'); setOpenTicket({ ...openTicket, status: 'opened' }); }}>
+                    Mark Opened
+                  </Button>
+                )}
+                {(openTicket.status || '').toLowerCase() !== 'resolved' && (
+                  <Button size="sm" onClick={async () => { await updateTicket(openTicket.id, 'resolved'); setOpenTicket({ ...openTicket, status: 'resolved' }); }}>
+                    Mark Resolved
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
