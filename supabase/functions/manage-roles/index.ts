@@ -60,10 +60,34 @@ Deno.serve(async (req) => {
     }
 
     const email = (body.email as string | undefined)?.trim().toLowerCase();
-    const role = body.role as string | undefined;
-    if (!email || !role || !['customer', 'admin', 'moderator', 'user'].includes(role)) {
+    const role = (body.role as string | undefined) ?? 'customer';
+    if (!email || !['customer', 'admin', 'moderator', 'user'].includes(role)) {
       return new Response(JSON.stringify({ error: 'email and valid role required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Invite: create user + grant role + send invite email
+    if (action === 'invite') {
+      const redirectTo = (body.redirectTo as string | undefined) ?? undefined;
+      const { data: invited, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
+        redirectTo,
+      });
+      if (invErr) {
+        return new Response(JSON.stringify({ error: invErr.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { error: roleErr } = await admin
+        .from('user_roles')
+        .insert({ user_id: invited.user!.id, role });
+      if (roleErr && !roleErr.message.includes('duplicate')) {
+        return new Response(JSON.stringify({ error: roleErr.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, user_id: invited.user!.id }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
