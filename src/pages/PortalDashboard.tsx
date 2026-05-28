@@ -6,10 +6,10 @@ import { RenewModal } from '@/components/portal/RenewModal';
 import { SupportTickets } from '@/components/portal/SupportTickets';
 import { InvoiceModal, InvoiceData } from '@/components/portal/InvoiceModal';
 import {
-  daysRemaining as calcDaysRemaining,
-  nextBillingDate,
+  daysRemainingWithPaid,
+  effectiveStateWithPaid,
+  effectiveRenewalDate,
   currentCycleStart,
-  effectiveState,
 } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 import './PortalDashboard.css';
