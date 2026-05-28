@@ -286,8 +286,7 @@ function BillingEditor({
 }) {
   const b = user.billing;
   const [form, setForm] = useState({
-    billing_start: b?.billing_start ?? '',
-    billing_end: b?.billing_end ?? '',
+    billing_day: b?.billing_day?.toString() ?? '',
     account_state: b?.account_state ?? 'active',
     balance: b?.balance?.toString() ?? '0',
     monthly_fee: b?.monthly_fee?.toString() ?? '24.99',
@@ -295,27 +294,33 @@ function BillingEditor({
 
   useEffect(() => {
     setForm({
-      billing_start: b?.billing_start ?? '',
-      billing_end: b?.billing_end ?? '',
+      billing_day: b?.billing_day?.toString() ?? '',
       account_state: b?.account_state ?? 'active',
       balance: b?.balance?.toString() ?? '0',
       monthly_fee: b?.monthly_fee?.toString() ?? '24.99',
     });
-  }, [user.id, b?.billing_start, b?.billing_end, b?.account_state, b?.balance, b?.monthly_fee]);
+  }, [user.id, b?.billing_day, b?.account_state, b?.balance, b?.monthly_fee]);
 
-  const daysRemaining = (() => {
-    if (!form.billing_end) return '—';
-    const end = new Date(form.billing_end);
-    const now = new Date();
-    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return String(diff);
-  })();
+  const dayNum = parseInt(form.billing_day || '0', 10) || null;
+  const remaining = daysRemaining(dayNum);
+  const auto = autoStateFromDay(dayNum);
+  const manualActive = isManual(form.account_state);
+  const effective = manualActive ? form.account_state : auto;
+  const tag = manualActive ? 'MANUAL' : 'AUTO';
+
+  const cycleStart = dayNum ? currentCycleStart(dayNum) : null;
+  const cycleEnd = dayNum ? nextBillingDate(dayNum) : null;
 
   const save = async () => {
+    if (!dayNum || dayNum < 1 || dayNum > 28) {
+      hexToast.error('Billing day must be between 1 and 28');
+      return;
+    }
     const ok = await invoke({
       action: 'update_billing', user_id: user.id,
-      billing_start: form.billing_start || null,
-      billing_end: form.billing_end || null,
+      billing_day: dayNum,
+      billing_start: cycleStart ? cycleStart.toISOString().slice(0, 10) : null,
+      billing_end: cycleEnd ? cycleEnd.toISOString().slice(0, 10) : null,
       account_state: form.account_state,
       balance: parseFloat(form.balance) || 0,
       monthly_fee: parseFloat(form.monthly_fee) || 0,
@@ -330,23 +335,62 @@ function BillingEditor({
     <section>
       <h4 className="text-xs font-mono uppercase tracking-[0.2em] text-muted-foreground mb-3">// Billing Cycle</h4>
       <div className="grid sm:grid-cols-2 gap-3">
-        <Field label="Billing Start Date">
-          <Input type="date" value={form.billing_start} onChange={(e) => setForm({ ...form, billing_start: e.target.value })} />
-        </Field>
-        <Field label="Billing End Date">
-          <Input type="date" value={form.billing_end} onChange={(e) => setForm({ ...form, billing_end: e.target.value })} />
+        <Field label="Billing Day">
+          <Input
+            type="number"
+            min={1}
+            max={28}
+            value={form.billing_day}
+            onChange={(e) => setForm({ ...form, billing_day: e.target.value })}
+            placeholder="e.g. 10"
+          />
+          <p className="mt-1 text-[10px] text-muted-foreground font-mono">
+            Customer is billed on the {form.billing_day || 'Xth'}{form.billing_day ? ordinal(parseInt(form.billing_day, 10)) : ''} of every month.
+          </p>
         </Field>
         <Field label="Days Remaining">
-          <Input value={daysRemaining} readOnly disabled className="font-mono" />
+          <Input value={remaining === null ? '—' : String(remaining)} readOnly disabled className="font-mono" />
+          <p className="mt-1 text-[10px] text-muted-foreground font-mono">
+            Next renewal: {formatDate(cycleEnd)}
+          </p>
         </Field>
-        <Field label="Account State">
-          <select
-            value={form.account_state}
-            onChange={(e) => setForm({ ...form, account_state: e.target.value })}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            {STATE_OPTIONS.map((s) => <option key={s} value={s}>{s.toUpperCase()}</option>)}
-          </select>
+        <Field label="Account State" className="sm:col-span-2">
+          <div className="flex items-center gap-2">
+            <select
+              value={effective}
+              onChange={(e) => {
+                const v = e.target.value;
+                // Only allow manual states to be selected; selecting an auto state clears the manual override.
+                if (v === 'suspended' || v === 'pending') {
+                  setForm({ ...form, account_state: v });
+                } else {
+                  setForm({ ...form, account_state: auto });
+                }
+              }}
+              className="flex h-10 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value={auto} disabled>
+                {auto.toUpperCase()} (auto)
+              </option>
+              <option value="suspended">SUSPENDED</option>
+              <option value="pending">PAYMENT PENDING</option>
+              {manualActive && (
+                <option value={auto}>↺ Clear override → {auto.toUpperCase()}</option>
+              )}
+            </select>
+            <span
+              className={`text-[10px] font-mono px-2 py-1 rounded border ${
+                tag === 'AUTO'
+                  ? 'text-cyan-400 border-cyan-400/40 bg-cyan-400/5'
+                  : 'text-amber-400 border-amber-400/40 bg-amber-400/5'
+              }`}
+            >
+              {tag}
+            </span>
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground font-mono">
+            ACTIVE / EXPIRING / EXPIRED are set automatically. Only SUSPENDED and PAYMENT PENDING are manual.
+          </p>
         </Field>
         <Field label="Outstanding Balance (USD)">
           <Input type="number" step="0.01" value={form.balance} onChange={(e) => setForm({ ...form, balance: e.target.value })} />
@@ -360,6 +404,12 @@ function BillingEditor({
       </Button>
     </section>
   );
+}
+
+function ordinal(n: number) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return s[(v - 20) % 10] || s[v] || s[0];
 }
 
 function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
