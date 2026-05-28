@@ -24,6 +24,10 @@ interface BillingData {
   account_state: AccountState;
   balance: number;
   monthly_fee: number;
+  signal_strength: string | null;
+  station_model: string | null;
+  ip_address: string | null;
+  frequency: string | null;
 }
 
 function formatDate(d: Date | string | null) {
