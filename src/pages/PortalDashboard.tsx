@@ -250,7 +250,7 @@ export default function PortalDashboard() {
             </tbody>
           </table>
         </div>
-        </div>
+
 
         {user && <SupportTickets userId={user.id} customerName={fullName} />}
       </div>
