@@ -126,13 +126,16 @@ export function BillingTab() {
     if (!payTarget) return;
     setConfirming(true);
     try {
-      // 1. clear balance + set active
+      // 1. clear balance, set active, and extend paid_until by 30 days from today
+      const todayDate = new Date();
+      const paidUntil = new Date(todayDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10);
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active' })
+        .update({ balance: 0, account_state: 'active', paid_until: paidUntil })
         .eq('user_id', payTarget.user_id);
 
       // 2. log payment history
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayDate.toISOString().slice(0, 10);
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: payTarget.user_id,
         date: today,
@@ -159,6 +162,7 @@ export function BillingTab() {
       setConfirming(false);
     }
   };
+
 
   return (
     <HexCard>
