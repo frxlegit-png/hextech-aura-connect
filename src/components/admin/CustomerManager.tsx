@@ -217,17 +217,17 @@ function EquipmentEditor({
   }, [user.id, b.station_model, b.signal_strength, b.ip_address, b.frequency]);
 
   const save = async () => {
-    const ok = await invoke({
-      action: 'update_billing', user_id: user.id,
-      station_model: form.station_model || null,
-      signal_strength: form.signal_strength || null,
-      ip_address: form.ip_address || null,
-      frequency: form.frequency || null,
-    });
-    if (ok) {
-      hexToast.success('Equipment details updated.');
-      onSaved();
-    }
+    const { error } = await (supabase.from('customer_billing' as any) as any)
+      .upsert({
+        user_id: user.id,
+        station_model: form.station_model || null,
+        signal_strength: form.signal_strength || null,
+        ip_address: form.ip_address || null,
+        frequency: form.frequency || null,
+      }, { onConflict: 'user_id' });
+    if (error) { hexToast.error(error.message || 'Failed to save equipment'); return; }
+    hexToast.success('Equipment details updated.');
+    onSaved();
   };
 
   return (
