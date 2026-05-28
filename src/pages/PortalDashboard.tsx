@@ -128,7 +128,7 @@ export default function PortalDashboard() {
           pendingRow: false,
         };
     }
-  }, [state, balance, daysToRenewal, billing?.billing_end]);
+  }, [state, balance, daysToRenewal, renewalDate]);
 
   return (
     <div className="hex-dash">
