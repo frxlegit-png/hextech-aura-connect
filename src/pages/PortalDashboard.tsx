@@ -52,7 +52,7 @@ export default function PortalDashboard() {
     if (!user) return;
     const load = async () => {
       const [{ data: bill }, { data: profile }, { data: pays }, { data: invs }] = await Promise.all([
-        supabase.from('customer_billing').select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee' as any).eq('user_id', user.id).maybeSingle(),
+        supabase.from('customer_billing').select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee, signal_strength, station_model, ip_address, frequency' as any).eq('user_id', user.id).maybeSingle(),
         supabase.from('profiles').select('full_name, email, phone').eq('user_id', user.id).maybeSingle(),
         (supabase.from('payment_history' as any) as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(20),
         (supabase.from('invoices' as any) as any).select('*').eq('user_id', user.id).order('invoice_date', { ascending: false }),
