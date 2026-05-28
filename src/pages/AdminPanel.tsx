@@ -7,6 +7,7 @@ import { HexBadge } from '@/components/hex/HexBadge';
 import { HexCard } from '@/components/hex/HexCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CustomerManager } from '@/components/admin/CustomerManager';
