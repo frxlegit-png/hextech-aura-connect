@@ -172,7 +172,7 @@ function CustomerRow({
         <div className="border-t border-border p-4 space-y-6">
           <CustomerDetailsEditor user={user} onSaved={onChanged} invoke={invoke} busy={busy} />
           <BillingEditor user={user} onSaved={onChanged} invoke={invoke} busy={busy} />
-          <EquipmentEditor user={user} onSaved={onChanged} invoke={invoke} busy={busy} />
+          
           {!isAdmin && (
             <div className="flex justify-end">
               <Button variant="ghost" size="sm" disabled={busy} onClick={async () => {
