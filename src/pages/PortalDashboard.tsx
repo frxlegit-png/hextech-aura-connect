@@ -252,25 +252,26 @@ export default function PortalDashboard() {
           <div className="panel">
             <div className="panel-title">// Equipment</div>
             <div className="equip-header">
-              <div className="equip-name">Gen 2 AC Client Station</div>
+              <div className="equip-name">{billing?.station_model || 'Gen 2 AC Client Station'}</div>
             </div>
             <div className="signal-wrap">
               <div className="signal-label">Signal Strength</div>
               <div className="signal-row">
                 <div className="signal-bars">
-                  <div className="bar active" />
-                  <div className="bar active" />
-                  <div className="bar active" />
-                  <div className="bar active" />
-                  <div className="bar" />
+                  {(() => {
+                    const dbm = parseInt(String(billing?.signal_strength ?? '-62').replace(/[^\-\d]/g, ''), 10) || -62;
+                    // -50 strong → 5 bars; -90 weak → 1 bar
+                    const bars = Math.max(1, Math.min(5, Math.round((dbm + 95) / 10)));
+                    return [0,1,2,3,4].map(i => <div key={i} className={`bar ${i < bars ? 'active' : ''}`} />);
+                  })()}
                 </div>
-                <div className="signal-val">-62 dBm</div>
+                <div className="signal-val">{billing?.signal_strength || '-62 dBm'}</div>
               </div>
             </div>
-            <Row k="Device" v="Gen 2 AC Station" />
+            <Row k="Device" v={billing?.station_model || 'Gen 2 AC Station'} />
             <Row k="Router" v="300 Mbps Indoor AP" />
-            <Row k="IP Address" v="192.168.1.105" vClass="cyan" />
-            <Row k="Frequency" v="5 GHz" />
+            <Row k="IP Address" v={billing?.ip_address || '192.168.1.105'} vClass="cyan" />
+            <Row k="Frequency" v={billing?.frequency || '5 GHz'} />
           </div>
         </div>
 
