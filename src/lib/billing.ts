@@ -103,7 +103,6 @@ export function effectiveRenewalDate(
   return null;
 }
 
-}
 
 export function formatDate(d: Date | null) {
   if (!d) return '—';
