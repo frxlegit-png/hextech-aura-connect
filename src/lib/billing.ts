@@ -38,9 +38,29 @@ export function daysRemaining(day: number | null | undefined, from = new Date())
   return Math.max(0, Math.ceil((next.getTime() - atMidnight(from).getTime()) / MS_DAY));
 }
 
+/** Days remaining preferring an explicit paid_until date (set on payment confirmation). */
+export function daysRemainingWithPaid(
+  paid_until: string | null | undefined,
+  day: number | null | undefined,
+  from = new Date(),
+): number | null {
+  if (paid_until) {
+    const end = atMidnight(new Date(paid_until));
+    return Math.max(0, Math.ceil((end.getTime() - atMidnight(from).getTime()) / MS_DAY));
+  }
+  return daysRemaining(day, from);
+}
+
 /** Compute the AUTO state from billing_day. */
 export function autoStateFromDay(day: number | null | undefined): AutoState {
   const d = daysRemaining(day);
+  if (d === null) return 'active';
+  if (d <= 0) return 'expired';
+  if (d <= 7) return 'expiring';
+  return 'active';
+}
+
+function autoStateFromDays(d: number | null): AutoState {
   if (d === null) return 'active';
   if (d <= 0) return 'expired';
   if (d <= 7) return 'expiring';
@@ -60,6 +80,29 @@ export function effectiveState(
 ): AnyState {
   if (isManual(stored_state)) return stored_state;
   return autoStateFromDay(billing_day);
+}
+
+/** Effective state preferring paid_until when present. */
+export function effectiveStateWithPaid(
+  paid_until: string | null | undefined,
+  billing_day: number | null | undefined,
+  stored_state: string | null | undefined,
+): AnyState {
+  if (isManual(stored_state)) return stored_state;
+  if (paid_until) return autoStateFromDays(daysRemainingWithPaid(paid_until, billing_day));
+  return autoStateFromDay(billing_day);
+}
+
+/** Effective renewal date — paid_until takes precedence. */
+export function effectiveRenewalDate(
+  paid_until: string | null | undefined,
+  billing_day: number | null | undefined,
+): Date | null {
+  if (paid_until) return atMidnight(new Date(paid_until));
+  if (billing_day) return nextBillingDate(billing_day);
+  return null;
+}
+
 }
 
 export function formatDate(d: Date | null) {
