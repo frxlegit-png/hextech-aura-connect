@@ -37,20 +37,53 @@ export default function PortalDashboard() {
   const { user, signOut } = useAuth();
   const [billing, setBilling] = useState<BillingData | null>(null);
   const [showRenew, setShowRenew] = useState(false);
+  const [payments, setPayments] = useState<Array<{ id: string; date: string; description: string; method: string; amount: number; status: string }>>([]);
+  const [invoices, setInvoices] = useState<InvoiceData[]>([]);
+  const [openInvoice, setOpenInvoice] = useState<InvoiceData | null>(null);
 
   const fullName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'Customer';
   const firstName = fullName.split(' ')[0];
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from('customer_billing')
-        .select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee' as any)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (data) setBilling(data as unknown as BillingData);
-    })();
+    const load = async () => {
+      const [{ data: bill }, { data: profile }, { data: pays }, { data: invs }] = await Promise.all([
+        supabase.from('customer_billing').select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee' as any).eq('user_id', user.id).maybeSingle(),
+        supabase.from('profiles').select('full_name, email, phone').eq('user_id', user.id).maybeSingle(),
+        (supabase.from('payment_history' as any) as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(20),
+        (supabase.from('invoices' as any) as any).select('*').eq('user_id', user.id).order('invoice_date', { ascending: false }),
+      ]);
+      if (bill) {
+        setBilling(bill as unknown as BillingData);
+        const b: any = bill;
+        if (b.billing_day) {
+          await ensureCurrentCycleInvoice({
+            user_id: user.id,
+            billing_day: b.billing_day,
+            monthly_fee: Number(b.monthly_fee ?? 0),
+            client_name: profile?.full_name ?? fullName,
+            client_email: profile?.email ?? user.email ?? null,
+            client_phone: profile?.phone ?? null,
+          });
+          const { data: invs2 } = await (supabase.from('invoices' as any) as any)
+            .select('*').eq('user_id', user.id).order('invoice_date', { ascending: false });
+          if (invs2) setInvoices(invs2 as InvoiceData[]);
+        } else if (invs) {
+          setInvoices(invs as InvoiceData[]);
+        }
+      } else if (invs) {
+        setInvoices(invs as InvoiceData[]);
+      }
+      if (pays) setPayments(pays as any);
+    };
+    load();
+    const ch = supabase
+      .channel('portal_self')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_billing', filter: `user_id=eq.${user.id}` }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history', filter: `user_id=eq.${user.id}` }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices', filter: `user_id=eq.${user.id}` }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, [user]);
 
   const billingDay = billing?.billing_day ?? null;
