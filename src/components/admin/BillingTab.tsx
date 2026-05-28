@@ -9,9 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
-import { effectiveState } from '@/lib/billing';
+import { effectiveStateWithPaid, currentCycleStart } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
-import { currentCycleStart } from '@/lib/billing';
 
 interface Client {
   user_id: string;
@@ -23,6 +22,7 @@ interface Client {
   balance: number;
   billing_day: number | null;
   account_state: string;
+  paid_until: string | null;
 }
 
 const stateVariant = (s: string): any => {
@@ -53,7 +53,7 @@ export function BillingTab() {
 
   const load = async () => {
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
-      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state');
+      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, paid_until');
     if (!billing) return;
     const userIds = billing.map((b: any) => b.user_id);
     const { data: profiles } = await supabase
@@ -68,6 +68,7 @@ export function BillingTab() {
       balance: Number(b.balance ?? 0),
       billing_day: b.billing_day,
       account_state: b.account_state ?? 'active',
+      paid_until: b.paid_until ?? null,
       full_name: pmap.get(b.user_id)?.full_name ?? null,
       email: pmap.get(b.user_id)?.email ?? null,
       phone: pmap.get(b.user_id)?.phone ?? null,
@@ -125,13 +126,16 @@ export function BillingTab() {
     if (!payTarget) return;
     setConfirming(true);
     try {
-      // 1. clear balance + set active
+      // 1. clear balance, set active, and extend paid_until by 30 days from today
+      const todayDate = new Date();
+      const paidUntil = new Date(todayDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString().slice(0, 10);
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active' })
+        .update({ balance: 0, account_state: 'active', paid_until: paidUntil })
         .eq('user_id', payTarget.user_id);
 
       // 2. log payment history
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayDate.toISOString().slice(0, 10);
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: payTarget.user_id,
         date: today,
@@ -158,6 +162,7 @@ export function BillingTab() {
       setConfirming(false);
     }
   };
+
 
   return (
     <HexCard>
@@ -191,7 +196,7 @@ export function BillingTab() {
           </thead>
           <tbody>
             {filtered.map((c, i) => {
-              const state = effectiveState(c.billing_day, c.account_state);
+              const state = effectiveStateWithPaid(c.paid_until, c.billing_day, c.account_state);
               return (
                 <tr
                   key={c.user_id}

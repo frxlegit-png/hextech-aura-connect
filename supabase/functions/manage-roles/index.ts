@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
     // ----- UPDATE BILLING CYCLE -----
     if (action === 'update_billing') {
       const payload: Record<string, unknown> = { user_id: target.id };
-      const fields = ['account_id', 'billing_start', 'billing_end', 'billing_day', 'account_state', 'balance', 'monthly_fee', 'signal_strength', 'station_model', 'ip_address', 'frequency'];
+      const fields = ['account_id', 'billing_start', 'billing_end', 'billing_day', 'account_state', 'balance', 'monthly_fee', 'signal_strength', 'station_model', 'ip_address', 'frequency', 'paid_until'];
       for (const f of fields) if (body[f] !== undefined) payload[f] = body[f];
       const { error } = await admin.from('customer_billing').upsert(payload, { onConflict: 'user_id' });
       if (error) return json({ error: error.message }, 400);

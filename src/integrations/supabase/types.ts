@@ -59,6 +59,7 @@ export type Database = {
           frequency: string | null
           ip_address: string | null
           monthly_fee: number
+          paid_until: string | null
           password_plain: string | null
           signal_strength: string | null
           station_model: string | null
@@ -76,6 +77,7 @@ export type Database = {
           frequency?: string | null
           ip_address?: string | null
           monthly_fee?: number
+          paid_until?: string | null
           password_plain?: string | null
           signal_strength?: string | null
           station_model?: string | null
@@ -93,6 +95,7 @@ export type Database = {
           frequency?: string | null
           ip_address?: string | null
           monthly_fee?: number
+          paid_until?: string | null
           password_plain?: string | null
           signal_strength?: string | null
           station_model?: string | null

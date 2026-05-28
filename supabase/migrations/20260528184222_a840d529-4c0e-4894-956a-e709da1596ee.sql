@@ -1,0 +1,1 @@
+ALTER TABLE public.customer_billing ADD COLUMN IF NOT EXISTS paid_until date;
