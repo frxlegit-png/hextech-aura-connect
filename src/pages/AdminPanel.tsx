@@ -105,24 +105,11 @@ const AdminPanel = () => {
               <TabsTrigger value="customers"><Users className="w-4 h-4 mr-2" />Customers</TabsTrigger>
               <TabsTrigger value="invoices"><FileText className="w-4 h-4 mr-2" />Invoices</TabsTrigger>
               <TabsTrigger value="tickets"><LifeBuoy className="w-4 h-4 mr-2" />Support</TabsTrigger>
-              <TabsTrigger value="roles"><ShieldCheck className="w-4 h-4 mr-2" />Access</TabsTrigger>
+              <TabsTrigger value="payments"><Wallet className="w-4 h-4 mr-2" />Payments</TabsTrigger>
             </TabsList>
 
             <TabsContent value="customers">
-              <HexDataTable
-                columns={[
-                  { key: 'id', header: 'Account ID', mono: true },
-                  { key: 'name', header: 'Name' },
-                  { key: 'plan', header: 'Plan' },
-                  {
-                    key: 'status', header: 'Status',
-                    render: (r: any) => <HexBadge variant={r.status}>{String(r.status).toUpperCase()}</HexBadge>,
-                  },
-                  { key: 'balance', header: 'Balance' },
-                  { key: 'renews', header: 'Renews' },
-                ]}
-                data={CUSTOMERS as any}
-              />
+              <CustomerManager />
             </TabsContent>
 
             <TabsContent value="invoices">
@@ -158,10 +145,11 @@ const AdminPanel = () => {
               />
             </TabsContent>
 
-            <TabsContent value="roles">
-              <RoleManager />
+            <TabsContent value="payments">
+              <PaymentSettingsManager />
             </TabsContent>
           </Tabs>
+
         </motion.div>
       </main>
     </div>
