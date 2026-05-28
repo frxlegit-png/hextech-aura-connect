@@ -28,6 +28,8 @@ interface BillingData {
   station_model: string | null;
   ip_address: string | null;
   frequency: string | null;
+  frequency: string | null;
+  paid_until: string | null;
 }
 
 function formatDate(d: Date | string | null) {
