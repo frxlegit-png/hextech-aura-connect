@@ -37,18 +37,20 @@ export function RoleManager() {
     refresh();
   }, []);
 
-  const call = async (action: 'grant' | 'revoke', targetEmail: string, role = 'customer') => {
+  const call = async (action: 'grant' | 'revoke' | 'invite', targetEmail: string, role = 'customer') => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke('manage-roles', {
-      body: { action, email: targetEmail, role },
-    });
+    const body: Record<string, unknown> = { action, email: targetEmail, role };
+    if (action === 'invite') body.redirectTo = `${window.location.origin}/auth`;
+    const { data, error } = await supabase.functions.invoke('manage-roles', { body });
     setLoading(false);
     if (error || data?.error) {
       hexToast.error(data?.error ?? error?.message ?? 'Failed');
       return;
     }
-    hexToast.success(action === 'grant' ? `Granted ${role} to ${targetEmail}` : `Removed ${role} from ${targetEmail}`);
-    if (action === 'grant') setEmail('');
+    if (action === 'invite') hexToast.success(`Invite sent to ${targetEmail}`);
+    else if (action === 'grant') hexToast.success(`Granted ${role} to ${targetEmail}`);
+    else hexToast.success(`Removed ${role} from ${targetEmail}`);
+    if (action === 'invite' || action === 'grant') setEmail('');
     refresh();
   };
 
@@ -57,15 +59,15 @@ export function RoleManager() {
       <HexCard>
         <div className="flex items-center gap-2 mb-3">
           <ShieldCheck className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Grant Customer Access</h3>
+          <h3 className="text-sm font-semibold text-foreground">Invite Customer (Invite-Only)</h3>
         </div>
         <p className="text-xs text-muted-foreground mb-4">
-          The user must already have a Hextech account. Granting the customer role unlocks <code>/portal</code>.
+          Public signup is disabled. Enter an email to send an invite — the recipient sets their password and is granted <code>customer</code> access to <code>/portal</code> automatically.
         </p>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (email) call('grant', email, 'customer');
+            if (email) call('invite', email, 'customer');
           }}
           className="flex flex-col sm:flex-row gap-2"
         >
@@ -77,7 +79,7 @@ export function RoleManager() {
             required
           />
           <Button type="submit" disabled={loading || !email}>
-            <UserPlus className="w-4 h-4 mr-2" /> Grant Customer
+            <UserPlus className="w-4 h-4 mr-2" /> Send Invite
           </Button>
         </form>
       </HexCard>
