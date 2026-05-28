@@ -8,7 +8,6 @@ import {
   nextBillingDate,
   currentCycleStart,
   effectiveState,
-  isManual,
 } from '@/lib/billing';
 import './PortalDashboard.css';
 
