@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const admin = createClient(url, serviceKey);
 
-    // Validate caller
     const { data: userData, error: userErr } = await admin.auth.getUser(jwt);
     if (userErr || !userData.user) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {
@@ -38,7 +37,6 @@ Deno.serve(async (req) => {
     const action = body.action as string;
 
     if (action === 'list') {
-      // List customers — paginate through users + their roles
       const { data: usersPage, error: listErr } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
       if (listErr) throw listErr;
       const { data: roles } = await admin.from('user_roles').select('user_id, role');
@@ -67,26 +65,35 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Invite: create user + grant role + send invite email
-    if (action === 'invite') {
-      const redirectTo = (body.redirectTo as string | undefined) ?? undefined;
-      const { data: invited, error: invErr } = await admin.auth.admin.inviteUserByEmail(email, {
-        redirectTo,
+    // Create user directly with email + password (admin sets credentials manually)
+    if (action === 'create') {
+      const password = (body.password as string | undefined) ?? '';
+      const fullName = (body.full_name as string | undefined) ?? '';
+      if (password.length < 8) {
+        return new Response(JSON.stringify({ error: 'Password must be at least 8 characters' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { data: created, error: createErr } = await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: fullName },
       });
-      if (invErr) {
-        return new Response(JSON.stringify({ error: invErr.message }), {
+      if (createErr) {
+        return new Response(JSON.stringify({ error: createErr.message }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       const { error: roleErr } = await admin
         .from('user_roles')
-        .insert({ user_id: invited.user!.id, role });
+        .insert({ user_id: created.user!.id, role });
       if (roleErr && !roleErr.message.includes('duplicate')) {
         return new Response(JSON.stringify({ error: roleErr.message }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      return new Response(JSON.stringify({ ok: true, user_id: invited.user!.id }), {
+      return new Response(JSON.stringify({ ok: true, user_id: created.user!.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -94,6 +101,30 @@ Deno.serve(async (req) => {
     // Find user by email
     const { data: usersPage } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
     const target = usersPage.users.find((u) => u.email?.toLowerCase() === email);
+
+    if (action === 'set_password') {
+      const password = (body.password as string | undefined) ?? '';
+      if (password.length < 8) {
+        return new Response(JSON.stringify({ error: 'Password must be at least 8 characters' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (!target) {
+        return new Response(JSON.stringify({ error: `No user found with email ${email}` }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const { error: updErr } = await admin.auth.admin.updateUserById(target.id, { password });
+      if (updErr) {
+        return new Response(JSON.stringify({ error: updErr.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({ ok: true, user_id: target.id }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (!target) {
       return new Response(JSON.stringify({ error: `No user found with email ${email}` }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -119,6 +150,14 @@ Deno.serve(async (req) => {
         .eq('role', role);
       if (error) throw error;
       return new Response(JSON.stringify({ ok: true, user_id: target.id }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'delete_user') {
+      const { error } = await admin.auth.admin.deleteUser(target.id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ ok: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
