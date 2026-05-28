@@ -8,19 +8,14 @@ import { HexCard } from '@/components/hex/HexCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp } from 'lucide-react';
+import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp, Receipt } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CustomerManager } from '@/components/admin/CustomerManager';
 import { PaymentSettingsManager } from '@/components/admin/PaymentSettingsManager';
 import { RevenueManager } from '@/components/admin/RevenueManager';
+import { BillingTab } from '@/components/admin/BillingTab';
+import { InvoicesTab } from '@/components/admin/InvoicesTab';
 import { useAdminStats } from '@/hooks/useAdminStats';
-
-const INVOICES = [
-  { id: 'INV-2026-0418', customer: 'Tatenda Moyo', amount: '$24.99', method: 'EcoCash', status: 'paid', date: '06 May 2026' },
-  { id: 'INV-2026-0417', customer: 'Rumbi Chikore', amount: '$24.99', method: 'EcoCash', status: 'pending', date: '06 May 2026' },
-  { id: 'INV-2026-0416', customer: 'Farai Ncube', amount: '$49.98', method: '—', status: 'overdue', date: '02 Apr 2026' },
-  { id: 'INV-2026-0415', customer: 'Kuda Mhuriro', amount: '$24.99', method: 'ZimSwitch', status: 'paid', date: '18 Apr 2026' },
-];
 
 interface TicketRow {
   id: string;
