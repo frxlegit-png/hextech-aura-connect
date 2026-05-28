@@ -11,9 +11,9 @@ import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
 import { effectiveState } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
+import { effectiveStateWithPaid } from '@/lib/billing';
+import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 import { currentCycleStart } from '@/lib/billing';
-
-interface Client {
   user_id: string;
   account_id: string | null;
   full_name: string | null;
