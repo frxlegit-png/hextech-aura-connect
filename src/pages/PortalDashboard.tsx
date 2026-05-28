@@ -243,7 +243,7 @@ export default function PortalDashboard() {
             </thead>
             <tbody>
               <tr>
-                <td>{formatDate(billing?.billing_start ?? null)}</td>
+                <td>{formatDate(cycleStartDate)}</td>
                 <td>Monthly Subscription</td><td>EcoCash</td><td>${monthly}</td>
                 <td><span className={`pill ${cfg.pendingRow ? 'pill-pending' : 'pill-paid'}`}>{cfg.pendingRow ? 'PENDING' : 'PAID'}</span></td>
               </tr>
