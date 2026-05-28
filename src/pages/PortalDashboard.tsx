@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { RenewModal } from '@/components/portal/RenewModal';
+import {
+  daysRemaining as calcDaysRemaining,
+  nextBillingDate,
+  currentCycleStart,
+  effectiveState,
+  isManual,
+} from '@/lib/billing';
 import './PortalDashboard.css';
 
 type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
@@ -11,27 +18,16 @@ interface BillingData {
   account_id: string | null;
   billing_start: string | null;
   billing_end: string | null;
+  billing_day: number | null;
   account_state: AccountState;
   balance: number;
   monthly_fee: number;
 }
 
-function deriveState(b: BillingData | null): AccountState {
-  if (!b) return 'active';
-  // Manual override states win
-  if (b.account_state === 'suspended' || b.account_state === 'pending') return b.account_state;
-  if (!b.billing_end) return b.account_state || 'active';
-  const end = new Date(b.billing_end);
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const days = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (days < 0) return 'expired';
-  if (days <= 7) return 'expiring';
-  return 'active';
-}
-
-function formatDate(s: string | null) {
-  if (!s) return '—';
-  return new Date(s).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+function formatDate(d: Date | string | null) {
+  if (!d) return '—';
+  const dt = typeof d === 'string' ? new Date(d) : d;
+  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export default function PortalDashboard() {
