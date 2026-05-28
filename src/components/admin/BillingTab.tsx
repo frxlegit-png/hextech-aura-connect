@@ -185,8 +185,8 @@ export function BillingTab() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              <th className="px-3 py-2.5 text-left">Account ID</th>
               <th className="px-3 py-2.5 text-left">Full Name</th>
+              <th className="px-3 py-2.5 text-left">Account ID</th>
               <th className="px-3 py-2.5 text-left">Plan</th>
               <th className="px-3 py-2.5 text-right">Monthly Fee</th>
               <th className="px-3 py-2.5 text-right">Outstanding</th>
