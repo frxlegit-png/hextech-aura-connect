@@ -76,8 +76,11 @@ export function RenewModal({
         </div>
 
         <div className="hx-amount">Amount Due: USD {amount}</div>
-        <div className="hx-note">After payment, contact Hextech support to confirm your payment and activate your account.</div>
-        <a href={supportHref} className="hx-support-btn">CONTACT SUPPORT</a>
+        <div className="hx-note">
+          After payment, contact Hextech support with your proof of transaction — provide your{' '}
+          <strong>Transaction ID</strong> if paying via Omari, or your <strong>Approval Code</strong> if paying via EcoCash.
+        </div>
+        <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="hx-support-btn">CONTACT SUPPORT</a>
       </div>
     </div>
   );
