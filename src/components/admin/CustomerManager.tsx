@@ -10,11 +10,15 @@ import {
   UserPlus, RefreshCw, ShieldCheck, ChevronDown, ChevronUp,
   Eye, EyeOff, Save, X, Trash2,
 } from 'lucide-react';
+import {
+  autoStateFromDay, daysRemaining, isManual, nextBillingDate, currentCycleStart, formatDate,
+} from '@/lib/billing';
 
 interface BillingRow {
   account_id: string | null;
   billing_start: string | null;
   billing_end: string | null;
+  billing_day: number | null;
   account_state: string;
   balance: number;
   monthly_fee: number;
@@ -34,8 +38,6 @@ interface UserRow {
   profile: ProfileRow | null;
   billing: BillingRow | null;
 }
-
-const STATE_OPTIONS = ['active', 'expiring', 'expired', 'suspended', 'pending'];
 
 export function CustomerManager() {
   const [users, setUsers] = useState<UserRow[]>([]);
