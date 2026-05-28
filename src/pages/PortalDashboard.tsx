@@ -44,14 +44,15 @@ export default function PortalDashboard() {
     (async () => {
       const { data } = await supabase
         .from('customer_billing')
-        .select('account_id, billing_start, billing_end, account_state, balance, monthly_fee')
+        .select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee' as any)
         .eq('user_id', user.id)
         .maybeSingle();
-      if (data) setBilling(data as BillingData);
+      if (data) setBilling(data as unknown as BillingData);
     })();
   }, [user]);
 
-  const state = deriveState(billing);
+  const billingDay = billing?.billing_day ?? null;
+  const state = effectiveState(billingDay, billing?.account_state) as AccountState;
   const accountId = billing?.account_id ?? '—';
   const monthly = (billing?.monthly_fee ?? 24.99).toFixed(2);
   const balance = (billing?.balance ?? 0).toFixed(2);
@@ -61,16 +62,19 @@ export default function PortalDashboard() {
     navigate('/');
   };
 
-  const daysToRenewal = useMemo(() => {
-    if (!billing?.billing_end) return null;
-    const end = new Date(billing.billing_end);
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    return Math.max(0, Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
-  }, [billing?.billing_end]);
+  const renewalDate = useMemo(
+    () => (billingDay ? nextBillingDate(billingDay) : null),
+    [billingDay],
+  );
+  const cycleStartDate = useMemo(
+    () => (billingDay ? currentCycleStart(billingDay) : null),
+    [billingDay],
+  );
+  const daysToRenewal = useMemo(() => calcDaysRemaining(billingDay), [billingDay]);
 
   const cfg = useMemo(() => {
     const daysVal = daysToRenewal !== null ? String(daysToRenewal) : '—';
-    const renewSub = billing?.billing_end ? `Renews ${formatDate(billing.billing_end)}` : 'No billing cycle set';
+    const renewSub = renewalDate ? `Renews ${formatDate(renewalDate)}` : 'No billing cycle set';
 
     switch (state) {
       case 'suspended':
