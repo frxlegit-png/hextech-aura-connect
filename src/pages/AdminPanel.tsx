@@ -176,8 +176,9 @@ const AdminPanel = () => {
           </div>
 
           <Tabs defaultValue="customers" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
               <TabsTrigger value="customers"><Users className="w-4 h-4 mr-2" />Customers</TabsTrigger>
+              <TabsTrigger value="billing"><Receipt className="w-4 h-4 mr-2" />Billing</TabsTrigger>
               <TabsTrigger value="invoices"><FileText className="w-4 h-4 mr-2" />Invoices</TabsTrigger>
               <TabsTrigger value="tickets"><LifeBuoy className="w-4 h-4 mr-2" />Support</TabsTrigger>
               <TabsTrigger value="payments"><Wallet className="w-4 h-4 mr-2" />Payments</TabsTrigger>
@@ -187,22 +188,14 @@ const AdminPanel = () => {
               <CustomerManager />
             </TabsContent>
 
-            <TabsContent value="invoices">
-              <HexDataTable
-                columns={[
-                  { key: 'id', header: 'Invoice', mono: true },
-                  { key: 'customer', header: 'Customer' },
-                  { key: 'amount', header: 'Amount' },
-                  { key: 'method', header: 'Method' },
-                  {
-                    key: 'status', header: 'Status',
-                    render: (r: any) => <HexBadge variant={r.status}>{String(r.status).toUpperCase()}</HexBadge>,
-                  },
-                  { key: 'date', header: 'Date' },
-                ]}
-                data={INVOICES as any}
-              />
+            <TabsContent value="billing">
+              <BillingTab />
             </TabsContent>
+
+            <TabsContent value="invoices">
+              <InvoicesTab />
+            </TabsContent>
+
 
             <TabsContent value="tickets">
               <div className="flex gap-2 mb-3">
