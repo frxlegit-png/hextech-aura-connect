@@ -1,39 +1,87 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { RenewModal } from '@/components/portal/RenewModal';
 import './PortalDashboard.css';
 
 type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
 
-const STATES: { id: AccountState; label: string }[] = [
-  { id: 'active', label: 'Active' },
-  { id: 'expiring', label: 'Expiring Soon' },
-  { id: 'expired', label: 'Expired' },
-  { id: 'suspended', label: 'Suspended' },
-  { id: 'pending', label: 'Payment Pending' },
-];
+interface BillingData {
+  account_id: string | null;
+  billing_start: string | null;
+  billing_end: string | null;
+  account_state: AccountState;
+  balance: number;
+  monthly_fee: number;
+}
+
+function deriveState(b: BillingData | null): AccountState {
+  if (!b) return 'active';
+  // Manual override states win
+  if (b.account_state === 'suspended' || b.account_state === 'pending') return b.account_state;
+  if (!b.billing_end) return b.account_state || 'active';
+  const end = new Date(b.billing_end);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (days < 0) return 'expired';
+  if (days <= 7) return 'expiring';
+  return 'active';
+}
+
+function formatDate(s: string | null) {
+  if (!s) return '—';
+  return new Date(s).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 export default function PortalDashboard() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [state, setState] = useState<AccountState>('active');
+  const [billing, setBilling] = useState<BillingData | null>(null);
+  const [showRenew, setShowRenew] = useState(false);
 
   const fullName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'Customer';
   const firstName = fullName.split(' ')[0];
-  const accountId = 'HXT-00042';
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('customer_billing')
+        .select('account_id, billing_start, billing_end, account_state, balance, monthly_fee')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setBilling(data as BillingData);
+    })();
+  }, [user]);
+
+  const state = deriveState(billing);
+  const accountId = billing?.account_id ?? '—';
+  const monthly = (billing?.monthly_fee ?? 24.99).toFixed(2);
+  const balance = (billing?.balance ?? 0).toFixed(2);
 
   const handleLogout = async () => {
     await signOut();
     navigate('/');
   };
 
+  const daysToRenewal = useMemo(() => {
+    if (!billing?.billing_end) return null;
+    const end = new Date(billing.billing_end);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return Math.max(0, Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+  }, [billing?.billing_end]);
+
   const cfg = useMemo(() => {
+    const daysVal = daysToRenewal !== null ? String(daysToRenewal) : '—';
+    const renewSub = billing?.billing_end ? `Renews ${formatDate(billing.billing_end)}` : 'No billing cycle set';
+
     switch (state) {
       case 'suspended':
         return {
           badge: { tone: 'red', dot: 'static' as const, text: 'ACCOUNT SUSPENDED' },
           days: { value: '—', color: 'muted', accent: 'c-red', sub: 'Subscription suspended' },
-          balance: { value: '$24.99', color: 'red', sub: 'Payment required' },
+          balance: { value: `$${balance}`, color: 'red', sub: 'Payment required' },
           subStatus: { text: 'SUSPENDED', color: 'red' },
           alert: { tone: 'red' as const, text: 'Your account has been suspended. Please make a payment to restore access.' },
           renew: { label: 'Reactivate Account', variant: 'red', pulse: false },
@@ -42,18 +90,18 @@ export default function PortalDashboard() {
       case 'expiring':
         return {
           badge: { tone: 'amber', dot: 'pulse' as const, text: 'RENEWAL DUE SOON' },
-          days: { value: '5', color: 'amber', accent: 'c-amber', sub: 'Renews 28 May 2026' },
-          balance: { value: '$0.00', color: 'amber', sub: 'All payments up to date' },
+          days: { value: daysVal, color: 'amber', accent: 'c-amber', sub: renewSub },
+          balance: { value: `$${balance}`, color: parseFloat(balance) > 0 ? 'amber' : 'green', sub: parseFloat(balance) > 0 ? 'Payment recommended' : 'All payments up to date' },
           subStatus: { text: 'ACTIVE', color: 'green' },
-          alert: { tone: 'amber' as const, text: 'Your subscription expires in 5 days. Renew now to avoid interruption.' },
+          alert: { tone: 'amber' as const, text: `Your subscription expires in ${daysVal} days. Renew now to avoid interruption.` },
           renew: { label: 'Renew Subscription', variant: 'purple', pulse: true },
           pendingRow: false,
         };
       case 'expired':
         return {
           badge: { tone: 'red', dot: 'static' as const, text: 'SUBSCRIPTION EXPIRED' },
-          days: { value: '0', color: 'red', accent: 'c-red', sub: 'Expired today' },
-          balance: { value: '$24.99', color: 'amber', sub: 'Renewal required' },
+          days: { value: '0', color: 'red', accent: 'c-red', sub: 'Expired' },
+          balance: { value: `$${balance}`, color: 'amber', sub: 'Renewal required' },
           subStatus: { text: 'EXPIRED', color: 'red' },
           alert: { tone: 'red' as const, text: 'Your subscription has expired. Renew now to restore your connection.' },
           renew: { label: 'Renew Now', variant: 'red', pulse: false },
@@ -62,8 +110,8 @@ export default function PortalDashboard() {
       case 'pending':
         return {
           badge: { tone: 'amber', dot: 'pulse' as const, text: 'PAYMENT PENDING' },
-          days: { value: '14', color: 'purple', accent: 'c-purple', sub: 'Renews 06 Jun 2026' },
-          balance: { value: '$24.99', color: 'amber', sub: 'Processing payment' },
+          days: { value: daysVal, color: 'purple', accent: 'c-purple', sub: renewSub },
+          balance: { value: `$${balance}`, color: 'amber', sub: 'Processing payment' },
           subStatus: { text: 'ACTIVE', color: 'green' },
           alert: { tone: 'amber' as const, text: 'Your payment is being processed. Your account will be updated shortly.' },
           renew: { label: 'Renew Subscription', variant: 'purple', pulse: false },
@@ -72,15 +120,15 @@ export default function PortalDashboard() {
       default:
         return {
           badge: { tone: 'green', dot: 'pulse' as const, text: 'ACCOUNT ACTIVE' },
-          days: { value: '14', color: 'purple', accent: 'c-purple', sub: 'Renews 06 Jun 2026' },
-          balance: { value: '$0.00', color: 'amber', sub: 'All payments up to date' },
+          days: { value: daysVal, color: 'purple', accent: 'c-purple', sub: renewSub },
+          balance: { value: `$${balance}`, color: parseFloat(balance) > 0 ? 'amber' : 'green', sub: parseFloat(balance) > 0 ? 'Balance outstanding' : 'All payments up to date' },
           subStatus: { text: 'ACTIVE', color: 'green' },
           alert: null,
           renew: { label: 'Renew Subscription', variant: 'purple', pulse: false },
           pendingRow: false,
         };
     }
-  }, [state]);
+  }, [state, balance, daysToRenewal, billing?.billing_end]);
 
   return (
     <div className="hex-dash">
@@ -102,14 +150,6 @@ export default function PortalDashboard() {
             <button className="btn-logout" onClick={handleLogout}>Logout</button>
           </div>
         </nav>
-
-        <div className="state-switch">
-          {STATES.map((s) => (
-            <button key={s.id} className={state === s.id ? 'on' : ''} onClick={() => setState(s.id)}>
-              {s.label}
-            </button>
-          ))}
-        </div>
 
         <div className="welcome">
           <div>
@@ -156,12 +196,15 @@ export default function PortalDashboard() {
           <div className="panel">
             <div className="panel-title">// Subscription</div>
             <Row k="Plan" v="Residential Unlimited" vClass="cyan" />
-            <Row k="Start Date" v="06 Jan 2026" />
-            <Row k="Renewal Date" v="06 Jun 2026" vClass="purple" />
-            <Row k="Monthly Fee" v="USD 24.99" />
+            <Row k="Start Date" v={formatDate(billing?.billing_start ?? null)} />
+            <Row k="Renewal Date" v={formatDate(billing?.billing_end ?? null)} vClass="purple" />
+            <Row k="Monthly Fee" v={`USD ${monthly}`} />
             <Row k="Payment Method" v="EcoCash" vClass="green" />
             <Row k="Status" v={cfg.subStatus.text} vClass={cfg.subStatus.color} />
-            <button className={`btn-renew ${cfg.renew.variant === 'red' ? 'red' : ''} ${cfg.renew.pulse ? 'pulse' : ''}`}>
+            <button
+              className={`btn-renew ${cfg.renew.variant === 'red' ? 'red' : ''} ${cfg.renew.pulse ? 'pulse' : ''}`}
+              onClick={() => setShowRenew(true)}
+            >
               {cfg.renew.label}
             </button>
           </div>
@@ -199,17 +242,16 @@ export default function PortalDashboard() {
             </thead>
             <tbody>
               <tr>
-                <td>06 May 2026</td><td>Monthly Subscription</td><td>EcoCash</td><td>$24.99</td>
+                <td>{formatDate(billing?.billing_start ?? null)}</td>
+                <td>Monthly Subscription</td><td>EcoCash</td><td>${monthly}</td>
                 <td><span className={`pill ${cfg.pendingRow ? 'pill-pending' : 'pill-paid'}`}>{cfg.pendingRow ? 'PENDING' : 'PAID'}</span></td>
               </tr>
-              <tr><td>06 Apr 2026</td><td>Monthly Subscription</td><td>EcoCash</td><td>$24.99</td><td><span className="pill pill-paid">PAID</span></td></tr>
-              <tr><td>06 Mar 2026</td><td>Monthly Subscription</td><td>ZimSwitch</td><td>$24.99</td><td><span className="pill pill-paid">PAID</span></td></tr>
-              <tr><td>06 Feb 2026</td><td>Monthly Subscription</td><td>EcoCash</td><td>$24.99</td><td><span className="pill pill-paid">PAID</span></td></tr>
-              <tr><td>06 Jan 2026</td><td>Starter Kit + First Month</td><td>Cash</td><td>$104.98</td><td><span className="pill pill-paid">PAID</span></td></tr>
             </tbody>
           </table>
         </div>
       </div>
+
+      <RenewModal open={showRenew} onClose={() => setShowRenew(false)} amount={monthly} />
     </div>
   );
 }
