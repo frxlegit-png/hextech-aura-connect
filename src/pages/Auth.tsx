@@ -120,18 +120,8 @@ const Auth = () => {
             </button>
           </form>
 
-          <div className="divider">
-            <div className="divider-line" />
-            <div className="divider-text">Network Status</div>
-            <div className="divider-line" />
-          </div>
 
-          <div className="status-bar">
-            <span className="status-dot" />
-            <span className="status-text">
-              All systems <strong>operational</strong> — Harare network
-            </span>
-          </div>
+
 
           <div className="form-footer">
             Need help? <a onClick={() => navigate('/#contact')}>Contact support</a> · <a href="https://hextech.co.zw">hextech.co.zw</a>
