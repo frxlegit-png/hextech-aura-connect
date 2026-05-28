@@ -29,6 +29,7 @@ function fmt(d: string) {
 
 export function SupportTickets({ userId, customerName }: Props) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [active, setActive] = useState<Ticket | null>(null);
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
