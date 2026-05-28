@@ -89,6 +89,48 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          created_at: string
+          due_date: string
+          id: string
+          invoice_date: string
+          plan: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          invoice_date: string
+          plan?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          invoice_date?: string
+          plan?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       monthly_revenue: {
         Row: {
           amount: number
@@ -113,6 +155,42 @@ export type Database = {
           logged_by?: string | null
           month?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      payment_history: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string
+          id: string
+          invoice_id: string | null
+          method: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          invoice_id?: string | null
+          method?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          invoice_id?: string | null
+          method?: string
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
