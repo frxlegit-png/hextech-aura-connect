@@ -116,7 +116,14 @@ Deno.serve(async (req) => {
       }
       const { error: updErr } = await admin.auth.admin.updateUserById(target.id, { password });
       if (updErr) {
-        return new Response(JSON.stringify({ error: updErr.message }), {
+        const raw = updErr.message ?? 'Password update failed';
+        const friendly =
+          /pwned|leaked|compromis|weak|breach|hibp/i.test(raw)
+            ? 'This password has been found in a known data breach. Choose a stronger, unique password.'
+            : /short|length|at least/i.test(raw)
+            ? 'Password is too short. Use at least 8 characters.'
+            : raw;
+        return new Response(JSON.stringify({ error: friendly }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
