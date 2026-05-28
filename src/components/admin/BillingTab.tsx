@@ -52,7 +52,7 @@ export function BillingTab() {
   const [confirming, setConfirming] = useState(false);
 
   const load = async () => {
-    const { data: billing } = await (supabase.from('customer_billing' as any) as any)
+      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, paid_until');
       .select('user_id, account_id, monthly_fee, balance, billing_day, account_state');
     if (!billing) return;
     const userIds = billing.map((b: any) => b.user_id);
