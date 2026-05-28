@@ -8,19 +8,14 @@ import { HexCard } from '@/components/hex/HexCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp } from 'lucide-react';
+import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp, Receipt } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CustomerManager } from '@/components/admin/CustomerManager';
 import { PaymentSettingsManager } from '@/components/admin/PaymentSettingsManager';
 import { RevenueManager } from '@/components/admin/RevenueManager';
+import { BillingTab } from '@/components/admin/BillingTab';
+import { InvoicesTab } from '@/components/admin/InvoicesTab';
 import { useAdminStats } from '@/hooks/useAdminStats';
-
-const INVOICES = [
-  { id: 'INV-2026-0418', customer: 'Tatenda Moyo', amount: '$24.99', method: 'EcoCash', status: 'paid', date: '06 May 2026' },
-  { id: 'INV-2026-0417', customer: 'Rumbi Chikore', amount: '$24.99', method: 'EcoCash', status: 'pending', date: '06 May 2026' },
-  { id: 'INV-2026-0416', customer: 'Farai Ncube', amount: '$49.98', method: '—', status: 'overdue', date: '02 Apr 2026' },
-  { id: 'INV-2026-0415', customer: 'Kuda Mhuriro', amount: '$24.99', method: 'ZimSwitch', status: 'paid', date: '18 Apr 2026' },
-];
 
 interface TicketRow {
   id: string;
@@ -181,8 +176,9 @@ const AdminPanel = () => {
           </div>
 
           <Tabs defaultValue="customers" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
               <TabsTrigger value="customers"><Users className="w-4 h-4 mr-2" />Customers</TabsTrigger>
+              <TabsTrigger value="billing"><Receipt className="w-4 h-4 mr-2" />Billing</TabsTrigger>
               <TabsTrigger value="invoices"><FileText className="w-4 h-4 mr-2" />Invoices</TabsTrigger>
               <TabsTrigger value="tickets"><LifeBuoy className="w-4 h-4 mr-2" />Support</TabsTrigger>
               <TabsTrigger value="payments"><Wallet className="w-4 h-4 mr-2" />Payments</TabsTrigger>
@@ -192,22 +188,14 @@ const AdminPanel = () => {
               <CustomerManager />
             </TabsContent>
 
-            <TabsContent value="invoices">
-              <HexDataTable
-                columns={[
-                  { key: 'id', header: 'Invoice', mono: true },
-                  { key: 'customer', header: 'Customer' },
-                  { key: 'amount', header: 'Amount' },
-                  { key: 'method', header: 'Method' },
-                  {
-                    key: 'status', header: 'Status',
-                    render: (r: any) => <HexBadge variant={r.status}>{String(r.status).toUpperCase()}</HexBadge>,
-                  },
-                  { key: 'date', header: 'Date' },
-                ]}
-                data={INVOICES as any}
-              />
+            <TabsContent value="billing">
+              <BillingTab />
             </TabsContent>
+
+            <TabsContent value="invoices">
+              <InvoicesTab />
+            </TabsContent>
+
 
             <TabsContent value="tickets">
               <div className="flex gap-2 mb-3">

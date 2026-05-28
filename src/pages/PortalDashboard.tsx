@@ -4,12 +4,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { RenewModal } from '@/components/portal/RenewModal';
 import { SupportTickets } from '@/components/portal/SupportTickets';
+import { InvoiceModal, InvoiceData } from '@/components/portal/InvoiceModal';
 import {
   daysRemaining as calcDaysRemaining,
   nextBillingDate,
   currentCycleStart,
   effectiveState,
 } from '@/lib/billing';
+import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 import './PortalDashboard.css';
 
 type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
@@ -35,20 +37,53 @@ export default function PortalDashboard() {
   const { user, signOut } = useAuth();
   const [billing, setBilling] = useState<BillingData | null>(null);
   const [showRenew, setShowRenew] = useState(false);
+  const [payments, setPayments] = useState<Array<{ id: string; date: string; description: string; method: string; amount: number; status: string }>>([]);
+  const [invoices, setInvoices] = useState<InvoiceData[]>([]);
+  const [openInvoice, setOpenInvoice] = useState<InvoiceData | null>(null);
 
   const fullName = (user?.user_metadata?.full_name as string) || user?.email?.split('@')[0] || 'Customer';
   const firstName = fullName.split(' ')[0];
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const { data } = await supabase
-        .from('customer_billing')
-        .select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee' as any)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (data) setBilling(data as unknown as BillingData);
-    })();
+    const load = async () => {
+      const [{ data: bill }, { data: profile }, { data: pays }, { data: invs }] = await Promise.all([
+        supabase.from('customer_billing').select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee' as any).eq('user_id', user.id).maybeSingle(),
+        supabase.from('profiles').select('full_name, email, phone').eq('user_id', user.id).maybeSingle(),
+        (supabase.from('payment_history' as any) as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(20),
+        (supabase.from('invoices' as any) as any).select('*').eq('user_id', user.id).order('invoice_date', { ascending: false }),
+      ]);
+      if (bill) {
+        setBilling(bill as unknown as BillingData);
+        const b: any = bill;
+        if (b.billing_day) {
+          await ensureCurrentCycleInvoice({
+            user_id: user.id,
+            billing_day: b.billing_day,
+            monthly_fee: Number(b.monthly_fee ?? 0),
+            client_name: profile?.full_name ?? fullName,
+            client_email: profile?.email ?? user.email ?? null,
+            client_phone: profile?.phone ?? null,
+          });
+          const { data: invs2 } = await (supabase.from('invoices' as any) as any)
+            .select('*').eq('user_id', user.id).order('invoice_date', { ascending: false });
+          if (invs2) setInvoices(invs2 as InvoiceData[]);
+        } else if (invs) {
+          setInvoices(invs as InvoiceData[]);
+        }
+      } else if (invs) {
+        setInvoices(invs as InvoiceData[]);
+      }
+      if (pays) setPayments(pays as any);
+    };
+    load();
+    const ch = supabase
+      .channel('portal_self')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_billing', filter: `user_id=eq.${user.id}` }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history', filter: `user_id=eq.${user.id}` }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices', filter: `user_id=eq.${user.id}` }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, [user]);
 
   const billingDay = billing?.billing_day ?? null;
@@ -239,14 +274,39 @@ export default function PortalDashboard() {
           <div className="panel-title">// Payment History</div>
           <table>
             <thead>
-              <tr><th>Date</th><th>Description</th><th>Method</th><th>Amount</th><th>Status</th></tr>
+              <tr><th>Date</th><th>Description</th><th>Method</th><th>Amount</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td>{formatDate(cycleStartDate)}</td>
-                <td>Monthly Subscription</td><td>EcoCash</td><td>${monthly}</td>
-                <td><span className={`pill ${cfg.pendingRow ? 'pill-pending' : 'pill-paid'}`}>{cfg.pendingRow ? 'PENDING' : 'PAID'}</span></td>
-              </tr>
+              {payments.length === 0 && (
+                <tr>
+                  <td>{formatDate(cycleStartDate)}</td>
+                  <td>Monthly Subscription</td><td>—</td><td>${monthly}</td>
+                  <td><span className={`pill ${cfg.pendingRow ? 'pill-pending' : 'pill-paid'}`}>{cfg.pendingRow ? 'PENDING' : 'UNPAID'}</span></td>
+                  <td>{invoices[0] && (
+                    <button className="view-invoice-link" onClick={() => setOpenInvoice(invoices[0])}>VIEW INVOICE</button>
+                  )}</td>
+                </tr>
+              )}
+              {payments.map((p) => {
+                const payDate = new Date(p.date);
+                const matchInv = invoices.find((inv) => {
+                  const invDate = new Date(inv.invoice_date);
+                  return invDate.getFullYear() === payDate.getFullYear() && invDate.getMonth() === payDate.getMonth();
+                });
+                const paid = (p.status || '').toUpperCase() === 'PAID';
+                return (
+                  <tr key={p.id}>
+                    <td>{formatDate(p.date)}</td>
+                    <td>{p.description}</td>
+                    <td>{p.method}</td>
+                    <td>${Number(p.amount).toFixed(2)}</td>
+                    <td><span className={`pill ${paid ? 'pill-paid' : 'pill-pending'}`}>{(p.status || '').toUpperCase()}</span></td>
+                    <td>{matchInv && (
+                      <button className="view-invoice-link" onClick={() => setOpenInvoice(matchInv)}>VIEW INVOICE</button>
+                    )}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -256,6 +316,7 @@ export default function PortalDashboard() {
       </div>
 
       <RenewModal open={showRenew} onClose={() => setShowRenew(false)} amount={monthly} />
+      <InvoiceModal invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
 
     </div>
   );

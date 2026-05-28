@@ -434,3 +434,69 @@
   border: 1px solid rgba(124,58,237,0.5);
   color: #b794f4;
 }
+
+/* === View Invoice link in payment history === */
+.view-invoice-link {
+  background: none; border: none; cursor: pointer;
+  color: var(--cyan); font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: 0.15em; text-decoration: underline;
+  padding: 0;
+}
+.view-invoice-link:hover { color: #6FE9FF; }
+
+/* === Invoice Modal === */
+.inv-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; animation: invFade 0.18s ease-out;
+}
+@keyframes invFade { from { opacity: 0; } to { opacity: 1; } }
+.inv-modal {
+  position: relative;
+  background: rgba(10,10,10,0.95);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 26px 24px;
+  max-width: 460px; width: 100%;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--white);
+  max-height: 92vh; overflow-y: auto;
+  box-shadow: 0 30px 80px rgba(0,212,255,0.05);
+}
+.inv-close {
+  position: absolute; top: 10px; right: 14px;
+  background: none; border: none; color: rgba(255,255,255,0.5);
+  font-size: 24px; cursor: pointer; line-height: 1;
+}
+.inv-close:hover { color: var(--cyan); }
+.inv-header {
+  color: var(--cyan); font-size: 13px;
+  letter-spacing: 0.2em; margin-bottom: 18px;
+}
+.inv-brand { text-align: center; margin-bottom: 16px; }
+.inv-brand-name { font-size: 16px; letter-spacing: 0.2em; color: var(--white); }
+.inv-brand-url { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; letter-spacing: 0.1em; }
+.inv-divider { border-bottom: 1px solid rgba(255,255,255,0.07); margin: 12px 0; }
+.inv-row {
+  display: flex; justify-content: space-between;
+  font-size: 11px; padding: 4px 0; letter-spacing: 0.1em;
+}
+.inv-k { color: rgba(255,255,255,0.45); }
+.inv-v { color: var(--white); }
+.inv-line-head .inv-k, .inv-line-head .inv-v { color: rgba(255,255,255,0.45); font-size: 10px; }
+.inv-section-label { color: rgba(255,255,255,0.45); font-size: 10px; letter-spacing: 0.2em; margin-bottom: 6px; }
+.inv-bill { font-size: 12px; color: var(--white); }
+.inv-bill-sub { font-size: 11px; color: rgba(255,255,255,0.6); }
+.inv-total { font-size: 13px; color: var(--cyan); letter-spacing: 0.15em; }
+.inv-status-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 8px 0 16px; }
+.inv-status.paid { color: #5BE584; }
+.inv-status.unpaid { color: #F5B82E; }
+.inv-close-btn {
+  width: 100%; padding: 12px;
+  background: transparent; border: 1px solid var(--cyan);
+  color: var(--cyan); font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; letter-spacing: 0.2em; cursor: pointer;
+  border-radius: 6px; transition: background 0.2s;
+}
+.inv-close-btn:hover { background: rgba(0,212,255,0.08); }
