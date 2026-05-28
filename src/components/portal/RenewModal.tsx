@@ -11,6 +11,7 @@ export function RenewModal({
   amount: string;
   supportHref?: string;
 }) {
+  const whatsappHref = 'https://wa.me/263719169960';
   const [s, setS] = useState<Settings>({ ecocash: '', bank_account: '', omari: '' });
   const [copied, setCopied] = useState<string | null>(null);
 
