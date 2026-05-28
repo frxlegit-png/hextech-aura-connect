@@ -52,6 +52,7 @@ export type Database = {
           account_id: string | null
           account_state: string
           balance: number
+          billing_day: number | null
           billing_end: string | null
           billing_start: string | null
           created_at: string
@@ -64,6 +65,7 @@ export type Database = {
           account_id?: string | null
           account_state?: string
           balance?: number
+          billing_day?: number | null
           billing_end?: string | null
           billing_start?: string | null
           created_at?: string
@@ -76,6 +78,7 @@ export type Database = {
           account_id?: string | null
           account_state?: string
           balance?: number
+          billing_day?: number | null
           billing_end?: string | null
           billing_start?: string | null
           created_at?: string
