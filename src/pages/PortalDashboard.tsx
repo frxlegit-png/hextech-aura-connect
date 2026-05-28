@@ -4,12 +4,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { RenewModal } from '@/components/portal/RenewModal';
 import { SupportTickets } from '@/components/portal/SupportTickets';
+import { InvoiceModal, InvoiceData } from '@/components/portal/InvoiceModal';
 import {
   daysRemaining as calcDaysRemaining,
   nextBillingDate,
   currentCycleStart,
   effectiveState,
 } from '@/lib/billing';
+import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 import './PortalDashboard.css';
 
 type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
