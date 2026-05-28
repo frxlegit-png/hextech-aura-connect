@@ -355,3 +355,82 @@
   .hx-modal { padding: 24px 20px; }
   .hx-pay-value { font-size: 15px; }
 }
+
+/* Support tickets */
+.hex-dash .ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 22px;
+}
+@media (max-width: 880px) {
+  .hex-dash .ticket-grid { grid-template-columns: 1fr; }
+}
+.hex-dash .ticket-form { display: flex; flex-direction: column; gap: 10px; }
+.hex-dash .tf-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-top: 6px;
+}
+.hex-dash .tf-input {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  color: #F0F0F0;
+  outline: none;
+  transition: border-color .2s, background .2s;
+}
+.hex-dash .tf-input:focus {
+  border-color: rgba(124,58,237,0.55);
+  background: rgba(124,58,237,0.05);
+}
+.hex-dash .tf-textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+.hex-dash .tf-empty {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 0.1em;
+  padding: 16px 0;
+}
+.hex-dash .ticket-list {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 360px; overflow-y: auto;
+  padding-right: 4px;
+}
+.hex-dash .ticket-item {
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.hex-dash .ticket-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.hex-dash .ticket-code {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; letter-spacing: 0.18em;
+  color: #00D4FF;
+}
+.hex-dash .ticket-subject {
+  font-size: 13px; font-weight: 600; color: #F0F0F0;
+  margin-bottom: 4px;
+}
+.hex-dash .ticket-msg {
+  font-size: 12px; color: rgba(255,255,255,0.55);
+  line-height: 1.5; margin-bottom: 6px;
+  white-space: pre-wrap;
+}
+.hex-dash .ticket-date {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.35);
+}
+.hex-dash .pill-opened {
+  background: rgba(124,58,237,0.15);
+  border: 1px solid rgba(124,58,237,0.5);
+  color: #b794f4;
+}
