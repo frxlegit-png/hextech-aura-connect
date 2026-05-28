@@ -99,7 +99,12 @@ export function CustomerManager() {
 
       <HexCard>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-foreground">All Customers</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground">All Customers</h3>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              {users.length}
+            </span>
+          </div>
           <Button variant="ghost" size="sm" onClick={refresh} disabled={listing}>
             <RefreshCw className={`w-4 h-4 mr-2 ${listing ? 'animate-spin' : ''}`} /> Refresh
           </Button>
