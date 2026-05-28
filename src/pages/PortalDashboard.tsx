@@ -274,14 +274,39 @@ export default function PortalDashboard() {
           <div className="panel-title">// Payment History</div>
           <table>
             <thead>
-              <tr><th>Date</th><th>Description</th><th>Method</th><th>Amount</th><th>Status</th></tr>
+              <tr><th>Date</th><th>Description</th><th>Method</th><th>Amount</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td>{formatDate(cycleStartDate)}</td>
-                <td>Monthly Subscription</td><td>EcoCash</td><td>${monthly}</td>
-                <td><span className={`pill ${cfg.pendingRow ? 'pill-pending' : 'pill-paid'}`}>{cfg.pendingRow ? 'PENDING' : 'PAID'}</span></td>
-              </tr>
+              {payments.length === 0 && (
+                <tr>
+                  <td>{formatDate(cycleStartDate)}</td>
+                  <td>Monthly Subscription</td><td>—</td><td>${monthly}</td>
+                  <td><span className={`pill ${cfg.pendingRow ? 'pill-pending' : 'pill-paid'}`}>{cfg.pendingRow ? 'PENDING' : 'UNPAID'}</span></td>
+                  <td>{invoices[0] && (
+                    <button className="view-invoice-link" onClick={() => setOpenInvoice(invoices[0])}>VIEW INVOICE</button>
+                  )}</td>
+                </tr>
+              )}
+              {payments.map((p) => {
+                const payDate = new Date(p.date);
+                const matchInv = invoices.find((inv) => {
+                  const invDate = new Date(inv.invoice_date);
+                  return invDate.getFullYear() === payDate.getFullYear() && invDate.getMonth() === payDate.getMonth();
+                });
+                const paid = (p.status || '').toUpperCase() === 'PAID';
+                return (
+                  <tr key={p.id}>
+                    <td>{formatDate(p.date)}</td>
+                    <td>{p.description}</td>
+                    <td>{p.method}</td>
+                    <td>${Number(p.amount).toFixed(2)}</td>
+                    <td><span className={`pill ${paid ? 'pill-paid' : 'pill-pending'}`}>{(p.status || '').toUpperCase()}</span></td>
+                    <td>{matchInv && (
+                      <button className="view-invoice-link" onClick={() => setOpenInvoice(matchInv)}>VIEW INVOICE</button>
+                    )}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -291,6 +316,7 @@ export default function PortalDashboard() {
       </div>
 
       <RenewModal open={showRenew} onClose={() => setShowRenew(false)} amount={monthly} />
+      <InvoiceModal invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
 
     </div>
   );
