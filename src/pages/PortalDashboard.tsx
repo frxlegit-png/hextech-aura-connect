@@ -57,10 +57,11 @@ export default function PortalDashboard() {
       if (bill) {
         setBilling(bill as unknown as BillingData);
         const b: any = bill;
-        if (b.billing_day) {
+        if (b.billing_day && b.last_paid_date) {
           await ensureCurrentCycleInvoice({
             user_id: user.id,
             billing_day: b.billing_day,
+            last_paid_date: b.last_paid_date,
             monthly_fee: Number(b.monthly_fee ?? 0),
             client_name: profile?.full_name ?? fullName,
             client_email: profile?.email ?? user.email ?? null,
