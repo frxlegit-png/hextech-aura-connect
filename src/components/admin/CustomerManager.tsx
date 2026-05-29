@@ -102,7 +102,7 @@ export function CustomerManager() {
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold text-foreground">All Customers</h3>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              {users.length}
+              {filteredUsers.length}
             </span>
           </div>
           <Button variant="ghost" size="sm" onClick={refresh} disabled={listing}>
@@ -110,8 +110,19 @@ export function CustomerManager() {
           </Button>
         </div>
 
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search by customer name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-10 pl-9 pr-3 rounded-md border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30 transition-colors font-['Share_Tech_Mono',monospace]"
+          />
+        </div>
+
         <div className="space-y-2">
-          {users.map((u) => (
+          {filteredUsers.map((u) => (
             <CustomerRow
               key={u.id}
               user={u}
@@ -122,8 +133,10 @@ export function CustomerManager() {
               busy={busy}
             />
           ))}
-          {users.length === 0 && !listing && (
-            <div className="py-6 text-center text-xs text-muted-foreground">No users yet.</div>
+          {filteredUsers.length === 0 && !listing && (
+            <div className="py-6 text-center text-xs text-muted-foreground font-mono">
+              {searchQuery ? `// No customers found matching "${searchQuery}"` : 'No users yet.'}
+            </div>
           )}
         </div>
       </HexCard>
