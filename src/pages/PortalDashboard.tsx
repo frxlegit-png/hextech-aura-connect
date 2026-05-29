@@ -108,13 +108,16 @@ export default function PortalDashboard() {
     [paidUntil, billingDay],
   );
   const cycleStartDate = useMemo(() => {
+    // Prefer admin-set billing_start when present.
+    if (billing?.billing_start) return new Date(billing.billing_start);
     if (paidUntil) {
       const end = new Date(paidUntil);
       // Same day-of-month, previous month — keeps Start and Renewal aligned (e.g. 27th → 27th).
       return new Date(end.getFullYear(), end.getMonth() - 1, end.getDate());
     }
     return billingDay ? currentCycleStart(billingDay) : null;
-  }, [paidUntil, billingDay]);
+  }, [billing?.billing_start, paidUntil, billingDay]);
+
   const daysToRenewal = useMemo(
     () => daysRemainingWithPaid(paidUntil, billingDay),
     [paidUntil, billingDay],
