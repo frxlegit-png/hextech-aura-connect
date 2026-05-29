@@ -124,10 +124,7 @@ export function autoStateFromDay(
   return 'active';
 }
 
-  if (expired) return 'expired';
-  if (daysRemaining > 0 && daysRemaining <= 7) return 'expiring';
-  return 'active';
-}
+
 
 
 export const MANUAL_STATES: ManualState[] = ['suspended', 'pending'];
