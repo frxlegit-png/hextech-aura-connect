@@ -382,10 +382,35 @@ export function BillingTab() {
                   onChange={(e) => setPayDate(e.target.value)}
                   className="mt-1 h-10 text-sm"
                 />
-                <p className="mt-1 text-[10px] text-muted-foreground/80">
-                  Defaults to today. Early/late cycle logic uses this date.
-                </p>
+                {payInfo?.renewalDate && (
+                  <p className="mt-1 text-[10px]">
+                    <span className="text-muted-foreground/80">Current due date: </span>
+                    <span className={payInfo.isEarly ? 'text-green-400 font-mono' : 'text-red-400 font-mono'}>
+                      {formatDate(payInfo.renewalDate)}
+                    </span>
+                    <span className="text-muted-foreground/80">
+                      {payInfo.isEarly ? ' — early (due date preserved)' : ' — on/after due (cycle resets to payment date)'}
+                    </span>
+                  </p>
+                )}
+                {!payInfo?.renewalDate && (
+                  <p className="mt-1 text-[10px] text-muted-foreground/80">
+                    No prior cycle — payment date becomes the new anchor.
+                  </p>
+                )}
               </div>
+              <div className="rounded-md border border-border/60 px-3 py-2 bg-muted/20 text-[11px] flex items-center justify-between">
+                <span className="uppercase tracking-[0.18em] text-muted-foreground">Last invoice</span>
+                <span className="font-mono text-foreground">
+                  {lastInvoiceDate ? formatDate(new Date(lastInvoiceDate + 'T00:00:00')) : 'None yet'}
+                </span>
+              </div>
+              {payInfo?.alreadyPaidAhead && (
+                <div className="rounded-md border border-red-500/40 bg-red-500/10 p-2 text-[11px] text-red-300">
+                  This client is already paid one cycle in advance. Only one advance payment is allowed —
+                  wait until {payInfo.renewalDate ? formatDate(payInfo.renewalDate) : 'the next due date'}.
+                </div>
+              )}
               <div>
                 <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Payment Method</label>
                 <select
@@ -402,12 +427,13 @@ export function BillingTab() {
             <Button variant="outline" onClick={() => setPayTarget(null)} disabled={confirming}>CANCEL</Button>
             <Button
               onClick={confirmPaid}
-              disabled={confirming}
+              disabled={confirming || !!payInfo?.alreadyPaidAhead}
               className="bg-green-600 hover:bg-green-500 text-white"
             >
               CONFIRM
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </HexCard>
