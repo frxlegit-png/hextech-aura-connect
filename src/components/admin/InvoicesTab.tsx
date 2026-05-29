@@ -80,27 +80,8 @@ export function InvoicesTab() {
     );
   }, [rows, search]);
 
-  const toggleStatus = async () => {
-    if (!open) return;
-    const next = open.status?.toUpperCase() === 'PAID' ? 'UNPAID' : 'PAID';
-    await (supabase.from('invoices' as any) as any).update({ status: next }).eq('id', open.id);
-    if (next === 'PAID') {
-      await (supabase.from('payment_history' as any) as any).insert({
-        user_id: open.user_id,
-        date: new Date().toISOString().slice(0, 10),
-        description: 'Monthly Subscription',
-        method: 'Cash',
-        amount: open.amount,
-        status: 'PAID',
-      });
-      await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active' })
-        .eq('user_id', open.user_id);
-    }
-    hexToast.success(`Invoice marked ${next}`);
-    setOpen({ ...open, status: next });
-    load();
-  };
+  // Note: marking PAID/UNPAID is controlled exclusively from the Billing tab.
+
 
   const deleteInvoice = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
