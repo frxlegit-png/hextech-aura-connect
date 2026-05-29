@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { hexToast } from '@/components/hex/HexToast';
 import {
   UserPlus, RefreshCw, ShieldCheck, ChevronDown, ChevronUp,
-  Eye, EyeOff, Save, X, Trash2,
+  Eye, EyeOff, Save, X, Trash2, Search,
 } from 'lucide-react';
 import {
   autoStateFromDay, daysRemaining, isManual, nextBillingDate, currentCycleStart, formatDate,
