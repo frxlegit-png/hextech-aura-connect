@@ -152,14 +152,11 @@ export default function PortalDashboard() {
           pendingRow: false,
         };
       case 'pending':
-  const cycleStartDate = useMemo(() => {
-    if (paidUntil) {
-      const end = new Date(paidUntil);
-      end.setDate(end.getDate() - 30);
-      return end;
-    }
-    return billingDay ? currentCycleStart(billingDay) : null;
-  }, [paidUntil, billingDay]);
+        return {
+          badge: { tone: 'amber', dot: 'pulse' as const, text: 'PAYMENT PENDING' },
+          days: { value: daysVal, color: 'purple', accent: 'c-purple', sub: renewSub },
+          balance: { value: `$${balance}`, color: 'amber', sub: 'Processing payment' },
+          subStatus: { text: 'ACTIVE', color: 'green' },
           alert: { tone: 'amber' as const, text: 'Your payment is being processed. Your account will be updated shortly.' },
           renew: { label: 'Renew Subscription', variant: 'purple', pulse: false },
           pendingRow: true,
