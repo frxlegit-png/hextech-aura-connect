@@ -306,14 +306,15 @@ function BillingEditor({
   }, [user.id, b?.billing_day, b?.account_state, b?.balance, b?.monthly_fee]);
 
   const dayNum = parseInt(form.billing_day || '0', 10) || null;
-  const remaining = daysRemaining(dayNum);
-  const auto = autoStateFromDay(dayNum);
+  const lastPaid = b?.last_paid_date ?? null;
+  const remaining = daysRemaining(dayNum, lastPaid);
+  const auto = autoStateFromDay(dayNum, lastPaid);
   const manualActive = isManual(form.account_state);
   const effective = manualActive ? form.account_state : auto;
   const tag = manualActive ? 'MANUAL' : 'AUTO';
 
-  const cycleStart = dayNum ? currentCycleStart(dayNum) : null;
-  const cycleEnd = dayNum ? nextBillingDate(dayNum) : null;
+  const cycleStart = dayNum ? currentCycleStart(dayNum, lastPaid) : null;
+  const cycleEnd = dayNum ? nextBillingDate(dayNum, lastPaid) : null;
 
   const save = async () => {
     if (!dayNum || dayNum < 1 || dayNum > 28) {
