@@ -9,8 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
-import { effectiveState, currentCycleStart, formatDateKey } from '@/lib/billing';
 import { effectiveState, currentCycleStart, formatDateKey, syncExpiredBalance } from '@/lib/billing';
+import { ensureCurrentCycleInvoice } from '@/lib/invoices';
+
 
 
 interface Client {
