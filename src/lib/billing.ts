@@ -3,6 +3,11 @@
 export type AutoState = 'active' | 'expiring' | 'expired';
 export type ManualState = 'suspended' | 'pending';
 export type AnyState = AutoState | ManualState;
+export interface BillingDates {
+  startDate: Date;
+  renewalDate: Date;
+  daysRemaining: number;
+}
 
 const MS_DAY = 1000 * 60 * 60 * 24;
 
@@ -12,30 +17,43 @@ function atMidnight(d: Date) {
   return x;
 }
 
-/** Returns the next occurrence (>= today) of `day` in the current or next month. */
-export function nextBillingDate(day: number, from = new Date()): Date {
+export function formatDateKey(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Single source of truth for the current monthly billing cycle. */
+export function getBillingDates(billingDay: number | null | undefined, from = new Date()): BillingDates | null {
+  if (!billingDay || billingDay < 1 || billingDay > 28) return null;
+
+  const day = Math.trunc(billingDay);
   const today = atMidnight(from);
-  const candidate = new Date(today.getFullYear(), today.getMonth(), day);
-  if (candidate.getTime() < today.getTime()) {
-    return new Date(today.getFullYear(), today.getMonth() + 1, day);
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+
+  let startDate = new Date(currentYear, currentMonth, day);
+  if (today.getDate() < day) {
+    startDate = new Date(currentYear, currentMonth - 1, day);
   }
-  return candidate;
+  startDate = atMidnight(startDate);
+
+  const renewalDate = atMidnight(new Date(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate()));
+  const daysRemaining = Math.max(0, Math.ceil((renewalDate.getTime() - today.getTime()) / MS_DAY));
+
+  return { startDate, renewalDate, daysRemaining };
+}
+
+/** Returns the renewal date for the current cycle. */
+export function nextBillingDate(day: number, from = new Date()): Date {
+  return getBillingDates(day, from)?.renewalDate ?? atMidnight(from);
 }
 
 /** Returns the most recent occurrence (<= today) of `day`. */
 export function currentCycleStart(day: number, from = new Date()): Date {
-  const today = atMidnight(from);
-  const candidate = new Date(today.getFullYear(), today.getMonth(), day);
-  if (candidate.getTime() > today.getTime()) {
-    return new Date(today.getFullYear(), today.getMonth() - 1, day);
-  }
-  return candidate;
+  return getBillingDates(day, from)?.startDate ?? atMidnight(from);
 }
 
 export function daysRemaining(day: number | null | undefined, from = new Date()): number | null {
-  if (!day) return null;
-  const next = nextBillingDate(day, from);
-  return Math.max(0, Math.ceil((next.getTime() - atMidnight(from).getTime()) / MS_DAY));
+  return getBillingDates(day, from)?.daysRemaining ?? null;
 }
 
 /** Days remaining preferring an explicit paid_until date (set on payment confirmation). */
@@ -44,6 +62,7 @@ export function daysRemainingWithPaid(
   day: number | null | undefined,
   from = new Date(),
 ): number | null {
+  if (day) return daysRemaining(day, from);
   if (paid_until) {
     const end = atMidnight(new Date(paid_until));
     return Math.max(0, Math.ceil((end.getTime() - atMidnight(from).getTime()) / MS_DAY));
@@ -89,17 +108,17 @@ export function effectiveStateWithPaid(
   stored_state: string | null | undefined,
 ): AnyState {
   if (isManual(stored_state)) return stored_state;
-  if (paid_until) return autoStateFromDays(daysRemainingWithPaid(paid_until, billing_day));
-  return autoStateFromDay(billing_day);
+  if (billing_day) return autoStateFromDay(billing_day);
+  return autoStateFromDays(daysRemainingWithPaid(paid_until, billing_day));
 }
 
-/** Effective renewal date — paid_until takes precedence. */
+/** Effective renewal date from billing_day; paid_until is only a legacy fallback. */
 export function effectiveRenewalDate(
   paid_until: string | null | undefined,
   billing_day: number | null | undefined,
 ): Date | null {
+  if (billing_day) return getBillingDates(billing_day)?.renewalDate ?? null;
   if (paid_until) return atMidnight(new Date(paid_until));
-  if (billing_day) return nextBillingDate(billing_day);
   return null;
 }
 
