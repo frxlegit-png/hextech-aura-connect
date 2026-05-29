@@ -4,7 +4,7 @@ import { HexCard } from '@/components/hex/HexCard';
 import { HexBadge } from '@/components/hex/HexBadge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, Trash2 } from 'lucide-react';
 import { InvoiceModal, InvoiceData } from '@/components/portal/InvoiceModal';
 import { hexToast } from '@/components/hex/HexToast';
 import { formatInvoiceDate } from '@/lib/invoices';
