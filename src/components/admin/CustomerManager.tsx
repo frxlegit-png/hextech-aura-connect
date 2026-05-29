@@ -43,6 +43,7 @@ export function CustomerManager() {
   const [listing, setListing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // create form
   const [cEmail, setCEmail] = useState('');
