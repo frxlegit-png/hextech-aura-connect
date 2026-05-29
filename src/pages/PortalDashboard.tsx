@@ -101,19 +101,10 @@ export default function PortalDashboard() {
     navigate('/');
   };
 
-  const renewalDate = useMemo(
-    () => getBillingDates(billingDay)?.renewalDate ?? null,
-    [billingDay],
-  );
-  const cycleStartDate = useMemo(
-    () => getBillingDates(billingDay)?.startDate ?? null,
-    [billingDay],
-  );
-
-  const daysToRenewal = useMemo(
-    () => getBillingDates(billingDay)?.daysRemaining ?? null,
-    [billingDay],
-  );
+  const billingDates = getBillingDates(billingDay);
+  const renewalDate = billingDates?.renewalDate ?? null;
+  const cycleStartDate = billingDates?.startDate ?? null;
+  const daysToRenewal = billingDates?.daysRemaining ?? null;
 
   const cfg = useMemo(() => {
     const daysVal = daysToRenewal !== null ? String(daysToRenewal) : '—';
