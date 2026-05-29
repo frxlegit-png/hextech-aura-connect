@@ -66,7 +66,7 @@ export function InvoicesTab() {
         status: 'PAID',
       });
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active', paid_until: null })
+        .update({ balance: 0, account_state: 'active' })
         .eq('user_id', open.user_id);
     }
     hexToast.success(`Invoice marked ${next}`);
