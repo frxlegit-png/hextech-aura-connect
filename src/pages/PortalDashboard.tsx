@@ -89,7 +89,8 @@ export default function PortalDashboard() {
   }, [user]);
 
   const billingDay = billing?.billing_day ?? null;
-  const state = effectiveState(billingDay, billing?.account_state) as AccountState;
+  const lastPaidDate = billing?.last_paid_date ?? null;
+  const state = effectiveState(billingDay, lastPaidDate, billing?.account_state) as AccountState;
   const accountId = billing?.account_id ?? '—';
   const monthly = (billing?.monthly_fee ?? 24.99).toFixed(2);
   const balance = (billing?.balance ?? 0).toFixed(2);
@@ -99,9 +100,10 @@ export default function PortalDashboard() {
     navigate('/');
   };
 
-  const billingDates = getBillingDates(billingDay);
+  const billingDates = getBillingDates(billingDay, lastPaidDate);
   const renewalDate = billingDates?.renewalDate ?? null;
   const cycleStartDate = billingDates?.startDate ?? null;
+  const daysToRenewal = billingDates?.daysRemaining ?? null;
   const daysToRenewal = billingDates?.daysRemaining ?? null;
 
   const cfg = useMemo(() => {
