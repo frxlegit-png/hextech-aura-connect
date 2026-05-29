@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
-import { effectiveStateWithPaid, currentCycleStart } from '@/lib/billing';
+import { effectiveStateWithPaid, currentCycleStart, formatDateKey } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 
 interface Client {
@@ -126,12 +126,10 @@ export function BillingTab() {
     if (!payTarget) return;
     setConfirming(true);
     try {
-      // 1. clear balance, set active, and extend paid_until by 30 days from today
+      // 1. clear balance and set active. Cycle dates are calculated live from billing_day.
       const todayDate = new Date();
-      const paidUntil = new Date(todayDate.getTime() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 10);
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active', paid_until: paidUntil })
+        .update({ balance: 0, account_state: 'active', paid_until: null })
         .eq('user_id', payTarget.user_id);
 
       // 2. log payment history
@@ -147,7 +145,7 @@ export function BillingTab() {
 
       // 3. flip current-cycle invoice to PAID (if exists)
       if (payTarget.billing_day) {
-        const cycle = currentCycleStart(payTarget.billing_day).toISOString().slice(0, 10);
+        const cycle = formatDateKey(currentCycleStart(payTarget.billing_day));
         await (supabase.from('invoices' as any) as any)
           .update({ status: 'PAID' })
           .eq('user_id', payTarget.user_id)
