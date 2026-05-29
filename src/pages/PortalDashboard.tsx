@@ -60,6 +60,16 @@ export default function PortalDashboard() {
       if (bill) {
         setBilling(bill as unknown as BillingData);
         const b: any = bill;
+        // Auto-set balance to monthly_fee the moment the account flips to EXPIRED.
+        await syncExpiredBalance({
+          user_id: user.id,
+          billing_day: b.billing_day,
+          last_paid_date: b.last_paid_date,
+          account_state: b.account_state,
+          balance: Number(b.balance ?? 0),
+          monthly_fee: Number(b.monthly_fee ?? 0),
+        }).catch(() => {});
+
         if (b.billing_day && b.last_paid_date) {
           await ensureCurrentCycleInvoice({
             user_id: user.id,
