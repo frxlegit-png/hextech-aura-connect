@@ -161,16 +161,7 @@ export function InvoicesTab() {
         </table>
       </div>
 
-      {open && (
-        <>
-          <InvoiceModal invoice={open} onClose={() => setOpen(null)} />
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[120]">
-            <Button size="sm" onClick={toggleStatus} className="shadow-lg">
-              Mark as {open.status?.toUpperCase() === 'PAID' ? 'UNPAID' : 'PAID'}
-            </Button>
-          </div>
-        </>
-      )}
+      {open && <InvoiceModal invoice={open} onClose={() => setOpen(null)} />}
     </HexCard>
   );
 }
