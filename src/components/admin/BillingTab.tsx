@@ -127,7 +127,7 @@ export function BillingTab() {
       // 1. clear balance and set active. Cycle dates are calculated live from billing_day.
       const todayDate = new Date();
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active', paid_until: null })
+        .update({ balance: 0, account_state: 'active' })
         .eq('user_id', payTarget.user_id);
 
       // 2. log payment history
