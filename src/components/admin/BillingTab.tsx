@@ -51,6 +51,7 @@ export function BillingTab() {
   const [balanceDraft, setBalanceDraft] = useState('');
   const [payTarget, setPayTarget] = useState<Client | null>(null);
   const [payMethod, setPayMethod] = useState<string>('Cash');
+  const [payDate, setPayDate] = useState<string>(() => formatDateKey(new Date()));
   const [confirming, setConfirming] = useState(false);
 
   const load = async () => {
