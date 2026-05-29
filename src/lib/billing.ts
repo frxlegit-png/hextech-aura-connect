@@ -56,20 +56,6 @@ export function daysRemaining(day: number | null | undefined, from = new Date())
   return getBillingDates(day, from)?.daysRemaining ?? null;
 }
 
-/** Days remaining preferring an explicit paid_until date (set on payment confirmation). */
-export function daysRemainingWithPaid(
-  paid_until: string | null | undefined,
-  day: number | null | undefined,
-  from = new Date(),
-): number | null {
-  if (day) return daysRemaining(day, from);
-  if (paid_until) {
-    const end = atMidnight(new Date(paid_until));
-    return Math.max(0, Math.ceil((end.getTime() - atMidnight(from).getTime()) / MS_DAY));
-  }
-  return daysRemaining(day, from);
-}
-
 /** Compute the AUTO state from billing_day. */
 export function autoStateFromDay(day: number | null | undefined): AutoState {
   const d = daysRemaining(day);
@@ -99,27 +85,6 @@ export function effectiveState(
 ): AnyState {
   if (isManual(stored_state)) return stored_state;
   return autoStateFromDay(billing_day);
-}
-
-/** Effective state preferring paid_until when present. */
-export function effectiveStateWithPaid(
-  paid_until: string | null | undefined,
-  billing_day: number | null | undefined,
-  stored_state: string | null | undefined,
-): AnyState {
-  if (isManual(stored_state)) return stored_state;
-  if (billing_day) return autoStateFromDay(billing_day);
-  return autoStateFromDays(daysRemainingWithPaid(paid_until, billing_day));
-}
-
-/** Effective renewal date from billing_day; paid_until is only a legacy fallback. */
-export function effectiveRenewalDate(
-  paid_until: string | null | undefined,
-  billing_day: number | null | undefined,
-): Date | null {
-  if (billing_day) return getBillingDates(billing_day)?.renewalDate ?? null;
-  if (paid_until) return atMidnight(new Date(paid_until));
-  return null;
 }
 
 
