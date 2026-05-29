@@ -51,9 +51,9 @@ export function BillingTab() {
   const [payMethod, setPayMethod] = useState<string>('Cash');
   const [confirming, setConfirming] = useState(false);
 
+  const load = async () => {
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
       .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, last_paid_date');
-      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state');
     if (!billing) return;
     const userIds = billing.map((b: any) => b.user_id);
     const { data: profiles } = await supabase
@@ -68,18 +68,20 @@ export function BillingTab() {
       balance: Number(b.balance ?? 0),
       billing_day: b.billing_day,
       account_state: b.account_state ?? 'active',
+      last_paid_date: b.last_paid_date ?? null,
       full_name: pmap.get(b.user_id)?.full_name ?? null,
       email: pmap.get(b.user_id)?.email ?? null,
       phone: pmap.get(b.user_id)?.phone ?? null,
     }));
     setRows(merged);
 
-    // Auto-generate current-cycle invoices for all clients with a billing_day
+    // Auto-generate current-cycle invoices only when the customer has a paid anchor
     for (const c of merged) {
-      if (c.billing_day) {
+      if (c.billing_day && c.last_paid_date) {
         ensureCurrentCycleInvoice({
           user_id: c.user_id,
           billing_day: c.billing_day,
+          last_paid_date: c.last_paid_date,
           monthly_fee: c.monthly_fee,
           client_name: c.full_name,
           client_email: c.email,
@@ -88,6 +90,7 @@ export function BillingTab() {
       }
     }
   };
+
 
   useEffect(() => {
     load();
