@@ -205,7 +205,7 @@ export function BillingTab() {
           </thead>
           <tbody>
             {filtered.map((c, i) => {
-              const state = effectiveState(c.billing_day, c.account_state);
+              const state = effectiveState(c.billing_day, c.last_paid_date, c.account_state);
               return (
                 <tr
                   key={c.user_id}
