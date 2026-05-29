@@ -1,9 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
-import { currentCycleStart, formatDateKey } from './billing';
+import { formatDateKey } from './billing';
 
 interface EnsureArgs {
   user_id: string;
   billing_day: number | null;
+  last_paid_date: string | null;
   monthly_fee: number;
   plan?: string;
   client_name?: string | null;
@@ -11,11 +12,14 @@ interface EnsureArgs {
   client_phone?: string | null;
 }
 
-/** Ensure an invoice exists for the current billing cycle of the given user. */
+/**
+ * Ensure an invoice exists for the current billing cycle of the given user.
+ * The cycle is anchored to `last_paid_date`. If no payment has been recorded,
+ * no invoice can be generated (cycle has not started).
+ */
 export async function ensureCurrentCycleInvoice(args: EnsureArgs): Promise<void> {
-  if (!args.billing_day) return;
-  const cycleStart = currentCycleStart(args.billing_day);
-  const dateStr = formatDateKey(cycleStart);
+  if (!args.billing_day || !args.last_paid_date) return;
+  const dateStr = args.last_paid_date.slice(0, 10);
 
   const { data: existing } = await (supabase.from('invoices' as any) as any)
     .select('id')
