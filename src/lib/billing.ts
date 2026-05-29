@@ -97,16 +97,19 @@ export function daysRemaining(
   return getBillingDates(day, lastPaidDate, from).daysRemaining;
 }
 
-/** AUTO state computed from billing_day + last_paid_date. */
+/** AUTO state computed from billing_day + last_paid_date.
+ *  No payment anchor => ACTIVE (anchor hasn't been set yet by admin). */
 export function autoStateFromDay(
   day: number | null | undefined,
   lastPaidDate: string | Date | null | undefined,
 ): AutoState {
+  if (!lastPaidDate) return 'active';
   const { expired, daysRemaining } = getBillingDates(day, lastPaidDate);
   if (expired) return 'expired';
-  if (daysRemaining <= 7) return 'expiring';
+  if (daysRemaining > 0 && daysRemaining <= 7) return 'expiring';
   return 'active';
 }
+
 
 export const MANUAL_STATES: ManualState[] = ['suspended', 'pending'];
 
