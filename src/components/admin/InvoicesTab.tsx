@@ -20,17 +20,45 @@ export function InvoicesTab() {
   const [open, setOpen] = useState<InvoiceRow | null>(null);
 
   const load = async () => {
+    // Last 2 months window (covers current month and previous calendar month)
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 2);
+    cutoff.setHours(0, 0, 0, 0);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+
     const { data: invs } = await (supabase.from('invoices' as any) as any)
       .select('*')
+      .gte('invoice_date', cutoffStr)
       .order('invoice_date', { ascending: false })
       .limit(500);
     if (!invs) return;
-    const userIds = Array.from(new Set(invs.map((i: any) => i.user_id)));
+
+    // Dedupe: one invoice per user per (year-month). Keep most recent invoice_date, then newest created_at.
+    const sorted = [...invs].sort((a: any, b: any) => {
+      const d = (b.invoice_date || '').localeCompare(a.invoice_date || '');
+      if (d !== 0) return d;
+      return (b.created_at || '').localeCompare(a.created_at || '');
+    });
+    const seen = new Set<string>();
+    const dupes: string[] = [];
+    const unique: any[] = [];
+    for (const inv of sorted) {
+      const ym = (inv.invoice_date || '').slice(0, 7);
+      const key = `${inv.user_id}|${ym}`;
+      if (seen.has(key)) { dupes.push(inv.id); continue; }
+      seen.add(key);
+      unique.push(inv);
+    }
+    if (dupes.length) {
+      await (supabase.from('invoices' as any) as any).delete().in('id', dupes);
+    }
+
+    const userIds = Array.from(new Set(unique.map((i: any) => i.user_id)));
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
       .select('user_id, account_id')
       .in('user_id', userIds);
     const idMap = new Map((billing ?? []).map((b: any) => [b.user_id, b.account_id as string | null]));
-    setRows(invs.map((i: any) => ({ ...i, account_id: idMap.get(i.user_id) ?? null })));
+    setRows(unique.map((i: any) => ({ ...i, account_id: idMap.get(i.user_id) ?? null })));
   };
 
   useEffect(() => {
