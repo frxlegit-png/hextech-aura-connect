@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { currentCycleStart } from './billing';
+import { currentCycleStart, formatDateKey } from './billing';
 
 interface EnsureArgs {
   user_id: string;
@@ -15,7 +15,7 @@ interface EnsureArgs {
 export async function ensureCurrentCycleInvoice(args: EnsureArgs): Promise<void> {
   if (!args.billing_day) return;
   const cycleStart = currentCycleStart(args.billing_day);
-  const dateStr = cycleStart.toISOString().slice(0, 10);
+  const dateStr = formatDateKey(cycleStart);
 
   const { data: existing } = await (supabase.from('invoices' as any) as any)
     .select('id')
