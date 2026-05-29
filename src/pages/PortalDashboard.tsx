@@ -107,10 +107,14 @@ export default function PortalDashboard() {
     () => effectiveRenewalDate(paidUntil, billingDay),
     [paidUntil, billingDay],
   );
-  const cycleStartDate = useMemo(
-    () => (billingDay ? currentCycleStart(billingDay) : null),
-    [billingDay],
-  );
+  const cycleStartDate = useMemo(() => {
+    if (paidUntil) {
+      const end = new Date(paidUntil);
+      end.setDate(end.getDate() - 30);
+      return end;
+    }
+    return billingDay ? currentCycleStart(billingDay) : null;
+  }, [paidUntil, billingDay]);
   const daysToRenewal = useMemo(
     () => daysRemainingWithPaid(paidUntil, billingDay),
     [paidUntil, billingDay],
