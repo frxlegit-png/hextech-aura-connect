@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
-import { effectiveState, currentCycleStart, formatDateKey, syncExpiredBalance, getBillingDates } from '@/lib/billing';
+import { effectiveState, currentCycleStart, formatDateKey, syncExpiredBalance } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 
 
@@ -140,25 +140,14 @@ export function BillingTab() {
     setConfirming(true);
     try {
       const todayDate = new Date();
-      todayDate.setHours(0, 0, 0, 0);
-      const today = formatDateKey(todayDate);
+      const today = todayDate.toISOString().slice(0, 10);
 
-      // Determine early vs late based on existing renewal date.
-      const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date);
-      const isEarly = !!renewalDate && todayDate.getTime() < renewalDate.getTime();
-
-      // Early payment: keep due date the same. The new cycle begins at the
-      // existing renewalDate, so anchor last_paid_date there (the next renewal
-      // will be renewalDate + 1 month, preserving the customer's billing_day).
-      // Late/on-time payment: cycle starts today.
-      const newAnchor = isEarly ? formatDateKey(renewalDate!) : today;
-
-      // 1. Update billing.
+      // 1. Anchor the new billing cycle to today, clear balance, activate.
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active', last_paid_date: newAnchor })
+        .update({ balance: 0, account_state: 'active', last_paid_date: today })
         .eq('user_id', payTarget.user_id);
 
-      // 2. Log payment history (dated today regardless of early/late).
+      // 2. Log payment history
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: payTarget.user_id,
         date: today,
@@ -168,47 +157,24 @@ export function BillingTab() {
         status: 'PAID',
       });
 
-      // 3. Upsert the invoice for this cycle. We key by (user_id, due_date=newAnchor)
-      //    to prevent the auto-generator from creating a duplicate later.
+      // 3. Generate the new cycle invoice (anchored to today) and mark it PAID.
       if (payTarget.billing_day) {
-        const { data: existingInv } = await (supabase.from('invoices' as any) as any)
-          .select('id')
+        await ensureCurrentCycleInvoice({
+          user_id: payTarget.user_id,
+          billing_day: payTarget.billing_day,
+          last_paid_date: today,
+          monthly_fee: payTarget.monthly_fee,
+          client_name: payTarget.full_name,
+          client_email: payTarget.email,
+          client_phone: payTarget.phone,
+        });
+        await (supabase.from('invoices' as any) as any)
+          .update({ status: 'PAID' })
           .eq('user_id', payTarget.user_id)
-          .eq('due_date', newAnchor)
-          .maybeSingle();
-
-        if (existingInv) {
-          await (supabase.from('invoices' as any) as any)
-            .update({
-              invoice_date: today,
-              due_date: newAnchor,
-              status: 'PAID',
-              amount: payTarget.monthly_fee,
-              client_name: payTarget.full_name,
-              client_email: payTarget.email,
-              client_phone: payTarget.phone,
-            })
-            .eq('id', (existingInv as any).id);
-        } else {
-          await (supabase.from('invoices' as any) as any).insert({
-            user_id: payTarget.user_id,
-            invoice_date: today,
-            due_date: newAnchor,
-            client_name: payTarget.full_name,
-            client_email: payTarget.email,
-            client_phone: payTarget.phone,
-            plan: 'Residential Unlimited',
-            amount: payTarget.monthly_fee,
-            status: 'PAID',
-          });
-        }
+          .eq('invoice_date', today);
       }
 
-      hexToast.success(
-        isEarly
-          ? `Early payment recorded. Next bill covers the 30 days after the current due date.`
-          : `Payment confirmed for ${payTarget.full_name ?? payTarget.email ?? 'client'}. Account set to Active.`,
-      );
+      hexToast.success(`Payment confirmed for ${payTarget.full_name ?? payTarget.email ?? 'client'}. Account set to Active.`);
       setPayTarget(null);
       setPayMethod('Cash');
       load();
