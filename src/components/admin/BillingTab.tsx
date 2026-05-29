@@ -337,6 +337,19 @@ export function BillingTab() {
                 <div className="text-2xl font-mono text-green-400 mt-1">USD {payTarget.monthly_fee.toFixed(2)}</div>
               </div>
               <div>
+                <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Payment Date</label>
+                <Input
+                  type="date"
+                  value={payDate}
+                  max={formatDateKey(new Date())}
+                  onChange={(e) => setPayDate(e.target.value)}
+                  className="mt-1 h-10 text-sm"
+                />
+                <p className="mt-1 text-[10px] text-muted-foreground/80">
+                  Defaults to today. Early/late cycle logic uses this date.
+                </p>
+              </div>
+              <div>
                 <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Payment Method</label>
                 <select
                   value={payMethod}
