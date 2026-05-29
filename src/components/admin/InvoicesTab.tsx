@@ -102,6 +102,15 @@ export function InvoicesTab() {
     load();
   };
 
+  const deleteInvoice = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!confirm('Delete this invoice? This cannot be undone.')) return;
+    const { error } = await (supabase.from('invoices' as any) as any).delete().eq('id', id);
+    if (error) { hexToast.error('Failed to delete invoice'); return; }
+    hexToast.success('Invoice deleted');
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    if (open?.id === id) setOpen(null);
+
   return (
     <HexCard>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
