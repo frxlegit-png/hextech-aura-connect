@@ -53,6 +53,7 @@ export function BillingTab() {
   const [payMethod, setPayMethod] = useState<string>('Cash');
   const [payDate, setPayDate] = useState<string>(() => formatDateKey(new Date()));
   const [confirming, setConfirming] = useState(false);
+  const [lastInvoiceDate, setLastInvoiceDate] = useState<string | null>(null);
 
   const load = async () => {
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
