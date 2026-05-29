@@ -39,21 +39,6 @@ function parseDate(input: string | Date | null | undefined): Date | null {
 
 /**
  * Calculate billing cycle dates anchored to last_paid_date.
- * - No `last_paid_date` -> not started, expired = true.
- * - Renewal Date = `billing_day` of the month AFTER last payment.
- * - Cycle does NOT silently advance when renewal passes; it expires.
- */
-export function getBillingDates(
-  billingDay: number | null | undefined,
-  lastPaidDate: string | Date | null | undefined,
-  from: Date = new Date(),
-): BillingDates {
-  const today = atMidnight(from);
-  const day = billingDay && billingDay >= 1 && billingDay <= 28 ? Math.trunc(billingDay) : null;
-  const paid = parseDate(lastPaidDate);
-
-/**
- * Calculate billing cycle dates anchored to last_paid_date.
  * - No `last_paid_date` -> treat as ACTIVE (anchor not yet set by admin); no renewal computed.
  * - Renewal Date = `billing_day` of the month AFTER last payment.
  * - Cycle does NOT silently advance when renewal passes; it expires.
