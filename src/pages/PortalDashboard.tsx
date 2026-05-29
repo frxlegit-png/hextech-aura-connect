@@ -6,10 +6,8 @@ import { RenewModal } from '@/components/portal/RenewModal';
 import { SupportTickets } from '@/components/portal/SupportTickets';
 import { InvoiceModal, InvoiceData } from '@/components/portal/InvoiceModal';
 import {
-  daysRemainingWithPaid,
   effectiveStateWithPaid,
-  effectiveRenewalDate,
-  currentCycleStart,
+  getBillingDates,
 } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 import './PortalDashboard.css';
@@ -104,23 +102,17 @@ export default function PortalDashboard() {
   };
 
   const renewalDate = useMemo(
-    () => effectiveRenewalDate(paidUntil, billingDay),
-    [paidUntil, billingDay],
+    () => getBillingDates(billingDay)?.renewalDate ?? null,
+    [billingDay],
   );
-  const cycleStartDate = useMemo(() => {
-    // Prefer admin-set billing_start when present.
-    if (billing?.billing_start) return new Date(billing.billing_start);
-    if (paidUntil) {
-      const end = new Date(paidUntil);
-      // Same day-of-month, previous month — keeps Start and Renewal aligned (e.g. 27th → 27th).
-      return new Date(end.getFullYear(), end.getMonth() - 1, end.getDate());
-    }
-    return billingDay ? currentCycleStart(billingDay) : null;
-  }, [billing?.billing_start, paidUntil, billingDay]);
+  const cycleStartDate = useMemo(
+    () => getBillingDates(billingDay)?.startDate ?? null,
+    [billingDay],
+  );
 
   const daysToRenewal = useMemo(
-    () => daysRemainingWithPaid(paidUntil, billingDay),
-    [paidUntil, billingDay],
+    () => getBillingDates(billingDay)?.daysRemaining ?? null,
+    [billingDay],
   );
 
   const cfg = useMemo(() => {
