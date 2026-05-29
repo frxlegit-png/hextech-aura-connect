@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { formatInvoiceDate } from '@/lib/invoices';
+import { formatInvoiceDate, vatBreakdown } from '@/lib/invoices';
 
 export interface InvoiceData {
   id: string;
@@ -28,7 +28,8 @@ export function InvoiceModal({ invoice, onClose }: Props) {
 
   if (!invoice) return null;
   const paid = invoice.status?.toUpperCase() === 'PAID';
-  const amt = `$${Number(invoice.amount).toFixed(2)}`;
+  const { subtotal, vat, total } = vatBreakdown(Number(invoice.amount));
+  const fmt = (n: number) => `$${n.toFixed(2)}`;
 
   return (
     <div className="inv-overlay" onClick={onClose}>
@@ -60,13 +61,17 @@ export function InvoiceModal({ invoice, onClose }: Props) {
         </div>
         <div className="inv-row">
           <span className="inv-v">{invoice.plan ? `${invoice.plan}` : 'Monthly Subscription'}</span>
-          <span className="inv-v">{amt}</span>
+          <span className="inv-v">{fmt(subtotal)}</span>
+        </div>
+        <div className="inv-row">
+          <span className="inv-v" style={{ opacity: 0.75 }}>VAT (10% incl.)</span>
+          <span className="inv-v" style={{ opacity: 0.75 }}>{fmt(vat)}</span>
         </div>
 
         <div className="inv-divider" />
 
         <div className="inv-row inv-total">
-          <span>TOTAL</span><span>{amt}</span>
+          <span>TOTAL</span><span>{fmt(total)}</span>
         </div>
 
         <div className="inv-divider" />

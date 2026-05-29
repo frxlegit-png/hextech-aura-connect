@@ -12,7 +12,7 @@ import {
   syncExpiredBalance,
 } from '@/lib/billing';
 
-import { ensureCurrentCycleInvoice } from '@/lib/invoices';
+import { ensureCurrentCycleInvoice, dedupeUserInvoicesByMonth } from '@/lib/invoices';
 import './PortalDashboard.css';
 
 type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
@@ -82,12 +82,17 @@ export default function PortalDashboard() {
           });
           const { data: invs2 } = await (supabase.from('invoices' as any) as any)
             .select('*').eq('user_id', user.id).order('invoice_date', { ascending: false });
-          if (invs2) setInvoices(invs2 as InvoiceData[]);
+          if (invs2) {
+            const deduped = await dedupeUserInvoicesByMonth(invs2 as any[]);
+            setInvoices(deduped as InvoiceData[]);
+          }
         } else if (invs) {
-          setInvoices(invs as InvoiceData[]);
+          const deduped = await dedupeUserInvoicesByMonth(invs as any[]);
+          setInvoices(deduped as InvoiceData[]);
         }
       } else if (invs) {
-        setInvoices(invs as InvoiceData[]);
+        const deduped = await dedupeUserInvoicesByMonth(invs as any[]);
+        setInvoices(deduped as InvoiceData[]);
       }
       if (pays) setPayments(pays as any);
     };
