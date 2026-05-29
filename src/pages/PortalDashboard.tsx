@@ -110,8 +110,8 @@ export default function PortalDashboard() {
   const cycleStartDate = useMemo(() => {
     if (paidUntil) {
       const end = new Date(paidUntil);
-      end.setDate(end.getDate() - 30);
-      return end;
+      // Same day-of-month, previous month — keeps Start and Renewal aligned (e.g. 27th → 27th).
+      return new Date(end.getFullYear(), end.getMonth() - 1, end.getDate());
     }
     return billingDay ? currentCycleStart(billingDay) : null;
   }, [paidUntil, billingDay]);
