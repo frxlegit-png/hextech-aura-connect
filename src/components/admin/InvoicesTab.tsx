@@ -138,6 +138,7 @@ export function InvoicesTab() {
               <th className="px-3 py-2.5 text-left">Plan</th>
               <th className="px-3 py-2.5 text-right">Amount</th>
               <th className="px-3 py-2.5 text-left">Status</th>
+              <th className="px-3 py-2.5 text-right w-12"></th>
             </tr>
           </thead>
           <tbody>
@@ -158,11 +159,22 @@ export function InvoicesTab() {
                   <td className="px-3 py-2.5">
                     <HexBadge variant={paid ? 'paid' : ('pending' as any)}>{paid ? 'PAID' : 'UNPAID'}</HexBadge>
                   </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => deleteInvoice(r.id, e)}
+                      aria-label="Delete invoice"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </td>
                 </tr>
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">No invoices yet.</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-xs text-muted-foreground">No invoices in the last 2 months.</td></tr>
             )}
           </tbody>
         </table>
