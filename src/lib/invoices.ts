@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { formatDateKey } from './billing';
 
 interface EnsureArgs {
   user_id: string;
@@ -14,24 +13,25 @@ interface EnsureArgs {
 
 /**
  * Ensure an invoice exists for the current billing cycle of the given user.
- * The cycle is anchored to `last_paid_date`. If no payment has been recorded,
- * no invoice can be generated (cycle has not started).
+ * The cycle is anchored to `last_paid_date`. We key existence by due_date =
+ * last_paid_date so early-payment invoices (where invoice_date != due_date)
+ * still satisfy the check and don't get duplicated.
  */
 export async function ensureCurrentCycleInvoice(args: EnsureArgs): Promise<void> {
   if (!args.billing_day || !args.last_paid_date) return;
-  const dateStr = args.last_paid_date.slice(0, 10);
+  const anchor = args.last_paid_date.slice(0, 10);
 
   const { data: existing } = await (supabase.from('invoices' as any) as any)
     .select('id')
     .eq('user_id', args.user_id)
-    .eq('invoice_date', dateStr)
+    .eq('due_date', anchor)
     .maybeSingle();
   if (existing) return;
 
   await (supabase.from('invoices' as any) as any).insert({
     user_id: args.user_id,
-    invoice_date: dateStr,
-    due_date: dateStr,
+    invoice_date: anchor,
+    due_date: anchor,
     client_name: args.client_name ?? null,
     client_email: args.client_email ?? null,
     client_phone: args.client_phone ?? null,
