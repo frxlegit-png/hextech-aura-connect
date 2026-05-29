@@ -22,6 +22,7 @@ interface Client {
   balance: number;
   billing_day: number | null;
   account_state: string;
+  last_paid_date: string | null;
 }
 
 const stateVariant = (s: string): any => {
