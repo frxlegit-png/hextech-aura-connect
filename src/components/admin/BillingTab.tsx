@@ -90,7 +90,17 @@ export function BillingTab() {
           client_phone: c.phone,
         }).catch(() => {});
       }
+      // Auto-set balance = monthly_fee when account flips to EXPIRED.
+      syncExpiredBalance({
+        user_id: c.user_id,
+        billing_day: c.billing_day,
+        last_paid_date: c.last_paid_date,
+        account_state: c.account_state,
+        balance: c.balance,
+        monthly_fee: c.monthly_fee,
+      }).catch(() => {});
     }
+
   };
 
 
