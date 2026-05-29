@@ -110,6 +110,8 @@ export function InvoicesTab() {
     hexToast.success('Invoice deleted');
     setRows((prev) => prev.filter((r) => r.id !== id));
     if (open?.id === id) setOpen(null);
+  };
+
 
   return (
     <HexCard>
