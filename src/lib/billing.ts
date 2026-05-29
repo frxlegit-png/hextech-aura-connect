@@ -86,10 +86,15 @@ export function getBillingDates(
   };
 }
 
+/** Most recent invoice/cycle anchor — the last paid date (or null if never paid). */
+export function currentCycleStart(
+  _day: number | null | undefined,
+  lastPaidDate: string | Date | null | undefined,
   from: Date = new Date(),
 ): Date | null {
   return getBillingDates(_day, lastPaidDate, from).startDate;
 }
+
 
 export function nextBillingDate(
   day: number | null | undefined,
