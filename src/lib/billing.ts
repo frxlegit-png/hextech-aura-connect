@@ -52,8 +52,27 @@ export function getBillingDates(
   const day = billingDay && billingDay >= 1 && billingDay <= 28 ? Math.trunc(billingDay) : null;
   const paid = parseDate(lastPaidDate);
 
-  if (!day || !paid) {
-    return { startDate: paid, renewalDate: null, daysRemaining: 0, expired: true };
+/**
+ * Calculate billing cycle dates anchored to last_paid_date.
+ * - No `last_paid_date` -> treat as ACTIVE (anchor not yet set by admin); no renewal computed.
+ * - Renewal Date = `billing_day` of the month AFTER last payment.
+ * - Cycle does NOT silently advance when renewal passes; it expires.
+ */
+export function getBillingDates(
+  billingDay: number | null | undefined,
+  lastPaidDate: string | Date | null | undefined,
+  from: Date = new Date(),
+): BillingDates {
+  const today = atMidnight(from);
+  const day = billingDay && billingDay >= 1 && billingDay <= 28 ? Math.trunc(billingDay) : null;
+  const paid = parseDate(lastPaidDate);
+
+  if (!paid) {
+    // No payment anchor yet — do NOT auto-expire. Treat as active with no renewal date.
+    return { startDate: null, renewalDate: null, daysRemaining: 0, expired: false };
+  }
+  if (!day) {
+    return { startDate: paid, renewalDate: null, daysRemaining: 0, expired: false };
   }
 
   const renewalDate = atMidnight(new Date(paid.getFullYear(), paid.getMonth() + 1, day));
@@ -67,10 +86,6 @@ export function getBillingDates(
   };
 }
 
-/** Most recent invoice/cycle anchor — the last paid date (or null if never paid). */
-export function currentCycleStart(
-  _day: number | null | undefined,
-  lastPaidDate: string | Date | null | undefined,
   from: Date = new Date(),
 ): Date | null {
   return getBillingDates(_day, lastPaidDate, from).startDate;
