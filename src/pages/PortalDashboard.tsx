@@ -104,7 +104,6 @@ export default function PortalDashboard() {
   const renewalDate = billingDates?.renewalDate ?? null;
   const cycleStartDate = billingDates?.startDate ?? null;
   const daysToRenewal = billingDates?.daysRemaining ?? null;
-  const daysToRenewal = billingDates?.daysRemaining ?? null;
 
   const cfg = useMemo(() => {
     const daysVal = daysToRenewal !== null ? String(daysToRenewal) : '—';
