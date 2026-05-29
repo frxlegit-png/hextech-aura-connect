@@ -65,13 +65,6 @@ export function autoStateFromDay(day: number | null | undefined): AutoState {
   return 'active';
 }
 
-function autoStateFromDays(d: number | null): AutoState {
-  if (d === null) return 'active';
-  if (d <= 0) return 'expired';
-  if (d <= 7) return 'expiring';
-  return 'active';
-}
-
 export const MANUAL_STATES: ManualState[] = ['suspended', 'pending'];
 
 export function isManual(state: string | null | undefined): state is ManualState {
