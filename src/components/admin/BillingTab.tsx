@@ -51,6 +51,7 @@ export function BillingTab() {
   const [balanceDraft, setBalanceDraft] = useState('');
   const [payTarget, setPayTarget] = useState<Client | null>(null);
   const [payMethod, setPayMethod] = useState<string>('Cash');
+  const [payDate, setPayDate] = useState<string>(() => formatDateKey(new Date()));
   const [confirming, setConfirming] = useState(false);
 
   const load = async () => {
@@ -139,43 +140,52 @@ export function BillingTab() {
     if (!payTarget) return;
     setConfirming(true);
     try {
-      const todayDate = new Date();
-      const today = formatDateKey(todayDate);
+      // Effective payment date: admin-selected date (defaults to today).
+      // All early-vs-late logic respects this date the same way it would
+      // respect the actual current day.
+      const parts = (payDate || formatDateKey(new Date())).split('-').map(Number);
+      const effectiveDate = parts.length === 3
+        ? new Date(parts[0], parts[1] - 1, parts[2])
+        : new Date();
+      effectiveDate.setHours(0, 0, 0, 0);
+      const effective = formatDateKey(effectiveDate);
 
-      // Determine early vs late payment relative to current renewal date.
-      const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date, todayDate);
+      // Determine early vs late payment relative to current renewal date,
+      // using the admin-selected payment date as "now".
+      const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date, effectiveDate);
       const isEarly =
         !!renewalDate &&
         !!payTarget.last_paid_date &&
-        todayDate < renewalDate; // strictly before due date
+        effectiveDate < renewalDate; // strictly before due date
 
       // New cycle anchor:
       //  - Early payment: anchor to the existing renewal/due date so the
       //    paid 30-day cycle starts AFTER the current due date (due date unchanged).
-      //  - Late/on-time payment: anchor to today (new 30-day cycle from today).
-      const newAnchor = isEarly && renewalDate ? formatDateKey(renewalDate) : today;
+      //  - Late/on-time payment: anchor to the effective payment date.
+      const newAnchor = isEarly && renewalDate ? formatDateKey(renewalDate) : effective;
 
       // Invoice dates:
-      //  - invoice_date is always the day the admin confirms payment (today).
+      //  - invoice_date is the effective payment date.
       //  - Early: due_date stays as the existing renewal date (unchanged).
-      //  - Late/on-time: due_date = today (their new cycle starts now).
-      const invoiceDate = today;
-      const dueDate = isEarly && renewalDate ? formatDateKey(renewalDate) : today;
+      //  - Late/on-time: due_date = effective payment date.
+      const invoiceDate = effective;
+      const dueDate = isEarly && renewalDate ? formatDateKey(renewalDate) : effective;
 
       // 1. Update billing row: clear balance, activate, set new anchor.
       await (supabase.from('customer_billing' as any) as any)
         .update({ balance: 0, account_state: 'active', last_paid_date: newAnchor })
         .eq('user_id', payTarget.user_id);
 
-      // 2. Log payment history (always dated today).
+      // 2. Log payment history (dated effective payment date).
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: payTarget.user_id,
-        date: today,
+        date: effective,
         description: isEarly ? 'Monthly Subscription (Advance Payment)' : 'Monthly Subscription',
         method: payMethod,
         amount: payTarget.monthly_fee,
         status: 'PAID',
       });
+
 
       // 3. Remove any existing invoice(s) for the target month (dedupe by month
       //    of invoice_date), then insert the new PAID invoice for this payment.
@@ -294,7 +304,7 @@ export function BillingTab() {
                       size="sm"
                       variant="outline"
                       className="h-7 px-3 text-[10px] tracking-[0.15em] border-green-500/50 text-green-400 hover:bg-green-500/10 hover:text-green-300"
-                      onClick={() => { setPayTarget(c); setPayMethod('Cash'); }}
+                      onClick={() => { setPayTarget(c); setPayMethod('Cash'); setPayDate(formatDateKey(new Date())); }}
                     >
                       <DollarSign className="w-3 h-3 mr-1" /> PAID
                     </Button>
@@ -325,6 +335,19 @@ export function BillingTab() {
               <div className="rounded-md border border-border p-3 bg-muted/40">
                 <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Amount</div>
                 <div className="text-2xl font-mono text-green-400 mt-1">USD {payTarget.monthly_fee.toFixed(2)}</div>
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Payment Date</label>
+                <Input
+                  type="date"
+                  value={payDate}
+                  max={formatDateKey(new Date())}
+                  onChange={(e) => setPayDate(e.target.value)}
+                  className="mt-1 h-10 text-sm"
+                />
+                <p className="mt-1 text-[10px] text-muted-foreground/80">
+                  Defaults to today. Early/late cycle logic uses this date.
+                </p>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Payment Method</label>
