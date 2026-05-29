@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
-import { effectiveStateWithPaid, currentCycleStart } from '@/lib/billing';
+import { effectiveState, currentCycleStart, formatDateKey } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 
 interface Client {
@@ -22,7 +22,6 @@ interface Client {
   balance: number;
   billing_day: number | null;
   account_state: string;
-  paid_until: string | null;
 }
 
 const stateVariant = (s: string): any => {
@@ -53,7 +52,7 @@ export function BillingTab() {
 
   const load = async () => {
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
-      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, paid_until');
+      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state');
     if (!billing) return;
     const userIds = billing.map((b: any) => b.user_id);
     const { data: profiles } = await supabase
@@ -68,7 +67,6 @@ export function BillingTab() {
       balance: Number(b.balance ?? 0),
       billing_day: b.billing_day,
       account_state: b.account_state ?? 'active',
-      paid_until: b.paid_until ?? null,
       full_name: pmap.get(b.user_id)?.full_name ?? null,
       email: pmap.get(b.user_id)?.email ?? null,
       phone: pmap.get(b.user_id)?.phone ?? null,
@@ -126,12 +124,10 @@ export function BillingTab() {
     if (!payTarget) return;
     setConfirming(true);
     try {
-      // 1. clear balance, set active, and extend paid_until by 30 days from today
+      // 1. clear balance and set active. Cycle dates are calculated live from billing_day.
       const todayDate = new Date();
-      const paidUntil = new Date(todayDate.getTime() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 10);
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active', paid_until: paidUntil })
+        .update({ balance: 0, account_state: 'active' })
         .eq('user_id', payTarget.user_id);
 
       // 2. log payment history
@@ -147,7 +143,7 @@ export function BillingTab() {
 
       // 3. flip current-cycle invoice to PAID (if exists)
       if (payTarget.billing_day) {
-        const cycle = currentCycleStart(payTarget.billing_day).toISOString().slice(0, 10);
+        const cycle = formatDateKey(currentCycleStart(payTarget.billing_day));
         await (supabase.from('invoices' as any) as any)
           .update({ status: 'PAID' })
           .eq('user_id', payTarget.user_id)
@@ -196,7 +192,7 @@ export function BillingTab() {
           </thead>
           <tbody>
             {filtered.map((c, i) => {
-              const state = effectiveStateWithPaid(c.paid_until, c.billing_day, c.account_state);
+              const state = effectiveState(c.billing_day, c.account_state);
               return (
                 <tr
                   key={c.user_id}

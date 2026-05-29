@@ -6,10 +6,8 @@ import { RenewModal } from '@/components/portal/RenewModal';
 import { SupportTickets } from '@/components/portal/SupportTickets';
 import { InvoiceModal, InvoiceData } from '@/components/portal/InvoiceModal';
 import {
-  daysRemainingWithPaid,
-  effectiveStateWithPaid,
-  effectiveRenewalDate,
-  currentCycleStart,
+  effectiveState,
+  getBillingDates,
 } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 import './PortalDashboard.css';
@@ -18,8 +16,6 @@ type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
 
 interface BillingData {
   account_id: string | null;
-  billing_start: string | null;
-  billing_end: string | null;
   billing_day: number | null;
   account_state: AccountState;
   balance: number;
@@ -28,7 +24,6 @@ interface BillingData {
   station_model: string | null;
   ip_address: string | null;
   frequency: string | null;
-  paid_until: string | null;
 }
 
 function formatDate(d: Date | string | null) {
@@ -53,7 +48,7 @@ export default function PortalDashboard() {
     if (!user) return;
     const load = async () => {
       const [{ data: bill }, { data: profile }, { data: pays }, { data: invs }] = await Promise.all([
-        supabase.from('customer_billing').select('account_id, billing_start, billing_end, billing_day, account_state, balance, monthly_fee, signal_strength, station_model, ip_address, frequency, paid_until' as any).eq('user_id', user.id).maybeSingle(),
+        supabase.from('customer_billing').select('account_id, billing_day, account_state, balance, monthly_fee, signal_strength, station_model, ip_address, frequency' as any).eq('user_id', user.id).maybeSingle(),
         supabase.from('profiles').select('full_name, email, phone').eq('user_id', user.id).maybeSingle(),
         (supabase.from('payment_history' as any) as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(20),
         (supabase.from('invoices' as any) as any).select('*').eq('user_id', user.id).order('invoice_date', { ascending: false }),
@@ -92,8 +87,7 @@ export default function PortalDashboard() {
   }, [user]);
 
   const billingDay = billing?.billing_day ?? null;
-  const paidUntil = billing?.paid_until ?? null;
-  const state = effectiveStateWithPaid(paidUntil, billingDay, billing?.account_state) as AccountState;
+  const state = effectiveState(billingDay, billing?.account_state) as AccountState;
   const accountId = billing?.account_id ?? '—';
   const monthly = (billing?.monthly_fee ?? 24.99).toFixed(2);
   const balance = (billing?.balance ?? 0).toFixed(2);
@@ -103,25 +97,10 @@ export default function PortalDashboard() {
     navigate('/');
   };
 
-  const renewalDate = useMemo(
-    () => effectiveRenewalDate(paidUntil, billingDay),
-    [paidUntil, billingDay],
-  );
-  const cycleStartDate = useMemo(() => {
-    // Prefer admin-set billing_start when present.
-    if (billing?.billing_start) return new Date(billing.billing_start);
-    if (paidUntil) {
-      const end = new Date(paidUntil);
-      // Same day-of-month, previous month — keeps Start and Renewal aligned (e.g. 27th → 27th).
-      return new Date(end.getFullYear(), end.getMonth() - 1, end.getDate());
-    }
-    return billingDay ? currentCycleStart(billingDay) : null;
-  }, [billing?.billing_start, paidUntil, billingDay]);
-
-  const daysToRenewal = useMemo(
-    () => daysRemainingWithPaid(paidUntil, billingDay),
-    [paidUntil, billingDay],
-  );
+  const billingDates = getBillingDates(billingDay);
+  const renewalDate = billingDates?.renewalDate ?? null;
+  const cycleStartDate = billingDates?.startDate ?? null;
+  const daysToRenewal = billingDates?.daysRemaining ?? null;
 
   const cfg = useMemo(() => {
     const daysVal = daysToRenewal !== null ? String(daysToRenewal) : '—';

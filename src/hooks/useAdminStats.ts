@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { effectiveStateWithPaid } from '@/lib/billing';
+import { effectiveState } from '@/lib/billing';
 
 export interface AdminStats {
   activeSubscribers: number;
@@ -41,7 +41,7 @@ export function useAdminStats(): AdminStats {
     const prevMonth = ym(prevDate);
 
     const [billingRes, revenueRes, ticketsRes, newProfRes] = await Promise.all([
-      supabase.from('customer_billing').select('billing_day, account_state, paid_until'),
+      supabase.from('customer_billing').select('billing_day, account_state'),
       supabase.from('monthly_revenue').select('month, amount'),
       supabase.from('tickets').select('status'),
       supabase.from('profiles').select('user_id, created_at').gte('created_at', startMonth),
@@ -50,7 +50,7 @@ export function useAdminStats(): AdminStats {
     const billing = billingRes.data ?? [];
     let active = 0;
     for (const b of billing as any[]) {
-      const eff = effectiveStateWithPaid(b.paid_until, b.billing_day, b.account_state);
+      const eff = effectiveState(b.billing_day, b.account_state);
       if (eff === 'active' || eff === 'expiring' || eff === 'pending') active++;
     }
 

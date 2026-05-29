@@ -16,8 +16,6 @@ import {
 
 interface BillingRow {
   account_id: string | null;
-  billing_start: string | null;
-  billing_end: string | null;
   billing_day: number | null;
   account_state: string;
   balance: number;
@@ -324,8 +322,6 @@ function BillingEditor({
     const ok = await invoke({
       action: 'update_billing', user_id: user.id,
       billing_day: dayNum,
-      billing_start: cycleStart ? cycleStart.toISOString().slice(0, 10) : null,
-      billing_end: cycleEnd ? cycleEnd.toISOString().slice(0, 10) : null,
       account_state: form.account_state,
       balance: parseFloat(form.balance) || 0,
       monthly_fee: parseFloat(form.monthly_fee) || 0,
@@ -356,7 +352,7 @@ function BillingEditor({
         <Field label="Days Remaining">
           <Input value={remaining === null ? '—' : String(remaining)} readOnly disabled className="font-mono" />
           <p className="mt-1 text-[10px] text-muted-foreground font-mono">
-            Next renewal: {formatDate(cycleEnd)}
+            Cycle: {formatDate(cycleStart)} → {formatDate(cycleEnd)}
           </p>
         </Field>
         <Field label="Account State" className="sm:col-span-2">
