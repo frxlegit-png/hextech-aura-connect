@@ -12,7 +12,7 @@ import {
   syncExpiredBalance,
 } from '@/lib/billing';
 
-import { ensureCurrentCycleInvoice } from '@/lib/invoices';
+import { ensureCurrentCycleInvoice, dedupeUserInvoicesByMonth } from '@/lib/invoices';
 import './PortalDashboard.css';
 
 type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
