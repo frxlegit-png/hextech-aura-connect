@@ -22,7 +22,6 @@ describe('payment-anchored billing cycle', () => {
     expect(autoStateFromDay(27, '2026-04-03')).toBe('expired');
   });
 
-  it('no last_paid_date → defaults to ACTIVE (not expired)', () => {
   it('billing_day set, no last_paid_date → ACTIVE with computed renewal', () => {
     const dates = getBillingDates(27, null, new Date(2026, 5, 5));
     // today 5 Jun 2026, anchor = 27 May 2026, renewal = 27 Jun 2026
