@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
-import { effectiveStateWithPaid, currentCycleStart, formatDateKey } from '@/lib/billing';
+import { effectiveState, currentCycleStart, formatDateKey } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 
 interface Client {
@@ -22,7 +22,6 @@ interface Client {
   balance: number;
   billing_day: number | null;
   account_state: string;
-  paid_until: string | null;
 }
 
 const stateVariant = (s: string): any => {
@@ -53,7 +52,7 @@ export function BillingTab() {
 
   const load = async () => {
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
-      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, paid_until');
+      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state');
     if (!billing) return;
     const userIds = billing.map((b: any) => b.user_id);
     const { data: profiles } = await supabase
@@ -68,7 +67,6 @@ export function BillingTab() {
       balance: Number(b.balance ?? 0),
       billing_day: b.billing_day,
       account_state: b.account_state ?? 'active',
-      paid_until: b.paid_until ?? null,
       full_name: pmap.get(b.user_id)?.full_name ?? null,
       email: pmap.get(b.user_id)?.email ?? null,
       phone: pmap.get(b.user_id)?.phone ?? null,
@@ -194,7 +192,7 @@ export function BillingTab() {
           </thead>
           <tbody>
             {filtered.map((c, i) => {
-              const state = effectiveStateWithPaid(c.paid_until, c.billing_day, c.account_state);
+              const state = effectiveState(c.billing_day, c.account_state);
               return (
                 <tr
                   key={c.user_id}
