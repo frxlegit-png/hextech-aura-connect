@@ -11,7 +11,7 @@ import {
   Eye, EyeOff, Save, X, Trash2,
 } from 'lucide-react';
 import {
-  autoStateFromDay, daysRemaining, isManual, nextBillingDate, currentCycleStart, formatDate, formatDateKey,
+  autoStateFromDay, daysRemaining, isManual, nextBillingDate, currentCycleStart, formatDate,
 } from '@/lib/billing';
 
 interface BillingRow {
