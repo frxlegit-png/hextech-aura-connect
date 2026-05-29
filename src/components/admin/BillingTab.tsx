@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { Search, DollarSign } from 'lucide-react';
-import { effectiveState, getBillingDates, formatDateKey, syncExpiredBalance } from '@/lib/billing';
+import { effectiveState, getBillingDates, formatDateKey, formatDate, syncExpiredBalance } from '@/lib/billing';
 import { ensureCurrentCycleInvoice } from '@/lib/invoices';
 
 
@@ -53,6 +53,7 @@ export function BillingTab() {
   const [payMethod, setPayMethod] = useState<string>('Cash');
   const [payDate, setPayDate] = useState<string>(() => formatDateKey(new Date()));
   const [confirming, setConfirming] = useState(false);
+  const [lastInvoiceDate, setLastInvoiceDate] = useState<string | null>(null);
 
   const load = async () => {
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
@@ -114,6 +115,38 @@ export function BillingTab() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  // Fetch most recent invoice date for the selected client.
+  useEffect(() => {
+    if (!payTarget) { setLastInvoiceDate(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase.from('invoices' as any) as any)
+        .select('invoice_date')
+        .eq('user_id', payTarget.user_id)
+        .order('invoice_date', { ascending: false })
+        .limit(1);
+      if (!cancelled) setLastInvoiceDate(data?.[0]?.invoice_date ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [payTarget]);
+
+  // Derived info for the confirm dialog.
+  const payInfo = useMemo(() => {
+    if (!payTarget) return null;
+    const parts = (payDate || formatDateKey(new Date())).split('-').map(Number);
+    const effDate = parts.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date();
+    effDate.setHours(0, 0, 0, 0);
+    const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date, effDate);
+    const isEarly = !!renewalDate && !!payTarget.last_paid_date && effDate < renewalDate;
+    // "Already paid one ahead" = current anchor (last_paid_date) is already
+    // in the future relative to the payment date. Block second advance pay.
+    const anchor = payTarget.last_paid_date
+      ? new Date(payTarget.last_paid_date + 'T00:00:00')
+      : null;
+    const alreadyPaidAhead = !!anchor && anchor > effDate;
+    return { effDate, renewalDate, isEarly, alreadyPaidAhead };
+  }, [payTarget, payDate]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
@@ -138,6 +171,10 @@ export function BillingTab() {
   };
   const confirmPaid = async () => {
     if (!payTarget) return;
+    if (payInfo?.alreadyPaidAhead) {
+      hexToast.error('Client already paid one cycle in advance. Wait until the current due date.');
+      return;
+    }
     setConfirming(true);
     try {
       // Effective payment date: admin-selected date (defaults to today).
@@ -345,10 +382,35 @@ export function BillingTab() {
                   onChange={(e) => setPayDate(e.target.value)}
                   className="mt-1 h-10 text-sm"
                 />
-                <p className="mt-1 text-[10px] text-muted-foreground/80">
-                  Defaults to today. Early/late cycle logic uses this date.
-                </p>
+                {payInfo?.renewalDate && (
+                  <p className="mt-1 text-[10px]">
+                    <span className="text-muted-foreground/80">Current due date: </span>
+                    <span className={payInfo.isEarly ? 'text-green-400 font-mono' : 'text-red-400 font-mono'}>
+                      {formatDate(payInfo.renewalDate)}
+                    </span>
+                    <span className="text-muted-foreground/80">
+                      {payInfo.isEarly ? ' — early (due date preserved)' : ' — on/after due (cycle resets to payment date)'}
+                    </span>
+                  </p>
+                )}
+                {!payInfo?.renewalDate && (
+                  <p className="mt-1 text-[10px] text-muted-foreground/80">
+                    No prior cycle — payment date becomes the new anchor.
+                  </p>
+                )}
               </div>
+              <div className="rounded-md border border-border/60 px-3 py-2 bg-muted/20 text-[11px] flex items-center justify-between">
+                <span className="uppercase tracking-[0.18em] text-muted-foreground">Last invoice</span>
+                <span className="font-mono text-foreground">
+                  {lastInvoiceDate ? formatDate(new Date(lastInvoiceDate + 'T00:00:00')) : 'None yet'}
+                </span>
+              </div>
+              {payInfo?.alreadyPaidAhead && (
+                <div className="rounded-md border border-red-500/40 bg-red-500/10 p-2 text-[11px] text-red-300">
+                  This client is already paid one cycle in advance. Only one advance payment is allowed —
+                  wait until {payInfo.renewalDate ? formatDate(payInfo.renewalDate) : 'the next due date'}.
+                </div>
+              )}
               <div>
                 <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Payment Method</label>
                 <select
@@ -365,12 +427,13 @@ export function BillingTab() {
             <Button variant="outline" onClick={() => setPayTarget(null)} disabled={confirming}>CANCEL</Button>
             <Button
               onClick={confirmPaid}
-              disabled={confirming}
+              disabled={confirming || !!payInfo?.alreadyPaidAhead}
               className="bg-green-600 hover:bg-green-500 text-white"
             >
               CONFIRM
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </HexCard>
