@@ -39,7 +39,7 @@ function parseDate(input: string | Date | null | undefined): Date | null {
 
 /**
  * Calculate billing cycle dates anchored to last_paid_date.
- * - No `last_paid_date` -> not started, expired = true.
+ * - No `last_paid_date` -> treat as ACTIVE (anchor not yet set by admin); no renewal computed.
  * - Renewal Date = `billing_day` of the month AFTER last payment.
  * - Cycle does NOT silently advance when renewal passes; it expires.
  */
@@ -52,8 +52,12 @@ export function getBillingDates(
   const day = billingDay && billingDay >= 1 && billingDay <= 28 ? Math.trunc(billingDay) : null;
   const paid = parseDate(lastPaidDate);
 
-  if (!day || !paid) {
-    return { startDate: paid, renewalDate: null, daysRemaining: 0, expired: true };
+  if (!paid) {
+    // No payment anchor yet — do NOT auto-expire. Treat as active with no renewal date.
+    return { startDate: null, renewalDate: null, daysRemaining: 0, expired: false };
+  }
+  if (!day) {
+    return { startDate: paid, renewalDate: null, daysRemaining: 0, expired: false };
   }
 
   const renewalDate = atMidnight(new Date(paid.getFullYear(), paid.getMonth() + 1, day));
@@ -76,6 +80,7 @@ export function currentCycleStart(
   return getBillingDates(_day, lastPaidDate, from).startDate;
 }
 
+
 export function nextBillingDate(
   day: number | null | undefined,
   lastPaidDate: string | Date | null | undefined,
@@ -92,16 +97,19 @@ export function daysRemaining(
   return getBillingDates(day, lastPaidDate, from).daysRemaining;
 }
 
-/** AUTO state computed from billing_day + last_paid_date. */
+/** AUTO state computed from billing_day + last_paid_date.
+ *  No payment anchor => ACTIVE (anchor hasn't been set yet by admin). */
 export function autoStateFromDay(
   day: number | null | undefined,
   lastPaidDate: string | Date | null | undefined,
 ): AutoState {
+  if (!lastPaidDate) return 'active';
   const { expired, daysRemaining } = getBillingDates(day, lastPaidDate);
   if (expired) return 'expired';
-  if (daysRemaining <= 7) return 'expiring';
+  if (daysRemaining > 0 && daysRemaining <= 7) return 'expiring';
   return 'active';
 }
+
 
 export const MANUAL_STATES: ManualState[] = ['suspended', 'pending'];
 
