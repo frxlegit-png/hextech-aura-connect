@@ -131,3 +131,33 @@ export function formatDate(d: Date | null) {
   if (!d) return '—';
   return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
+
+import { supabase } from '@/integrations/supabase/client';
+
+/**
+ * When the LIVE effective state is `expired` and the stored balance does not
+ * already equal the monthly fee, set balance = monthly_fee on the customer's
+ * billing row. Does NOT write account_state — state is computed live.
+ * Skips manual states (suspended/pending).
+ */
+export async function syncExpiredBalance(row: {
+  user_id: string;
+  billing_day: number | null | undefined;
+  last_paid_date: string | null | undefined;
+  account_state: string | null | undefined;
+  balance: number | null | undefined;
+  monthly_fee: number | null | undefined;
+}): Promise<boolean> {
+  if (isManual(row.account_state)) return false;
+  const auto = autoStateFromDay(row.billing_day, row.last_paid_date);
+  if (auto !== 'expired') return false;
+  const fee = Number(row.monthly_fee ?? 0);
+  if (!fee) return false;
+  const current = Number(row.balance ?? 0);
+  if (Math.abs(current - fee) < 0.005) return false;
+  const { error } = await (supabase.from('customer_billing' as any) as any)
+    .update({ balance: fee })
+    .eq('user_id', row.user_id);
+  return !error;
+}
+
