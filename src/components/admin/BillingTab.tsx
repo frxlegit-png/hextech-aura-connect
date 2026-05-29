@@ -115,6 +115,38 @@ export function BillingTab() {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  // Fetch most recent invoice date for the selected client.
+  useEffect(() => {
+    if (!payTarget) { setLastInvoiceDate(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase.from('invoices' as any) as any)
+        .select('invoice_date')
+        .eq('user_id', payTarget.user_id)
+        .order('invoice_date', { ascending: false })
+        .limit(1);
+      if (!cancelled) setLastInvoiceDate(data?.[0]?.invoice_date ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [payTarget]);
+
+  // Derived info for the confirm dialog.
+  const payInfo = useMemo(() => {
+    if (!payTarget) return null;
+    const parts = (payDate || formatDateKey(new Date())).split('-').map(Number);
+    const effDate = parts.length === 3 ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date();
+    effDate.setHours(0, 0, 0, 0);
+    const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date, effDate);
+    const isEarly = !!renewalDate && !!payTarget.last_paid_date && effDate < renewalDate;
+    // "Already paid one ahead" = current anchor (last_paid_date) is already
+    // in the future relative to the payment date. Block second advance pay.
+    const anchor = payTarget.last_paid_date
+      ? new Date(payTarget.last_paid_date + 'T00:00:00')
+      : null;
+    const alreadyPaidAhead = !!anchor && anchor > effDate;
+    return { effDate, renewalDate, isEarly, alreadyPaidAhead };
+  }, [payTarget, payDate]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
