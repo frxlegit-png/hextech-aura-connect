@@ -140,43 +140,52 @@ export function BillingTab() {
     if (!payTarget) return;
     setConfirming(true);
     try {
-      const todayDate = new Date();
-      const today = formatDateKey(todayDate);
+      // Effective payment date: admin-selected date (defaults to today).
+      // All early-vs-late logic respects this date the same way it would
+      // respect the actual current day.
+      const parts = (payDate || formatDateKey(new Date())).split('-').map(Number);
+      const effectiveDate = parts.length === 3
+        ? new Date(parts[0], parts[1] - 1, parts[2])
+        : new Date();
+      effectiveDate.setHours(0, 0, 0, 0);
+      const effective = formatDateKey(effectiveDate);
 
-      // Determine early vs late payment relative to current renewal date.
-      const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date, todayDate);
+      // Determine early vs late payment relative to current renewal date,
+      // using the admin-selected payment date as "now".
+      const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date, effectiveDate);
       const isEarly =
         !!renewalDate &&
         !!payTarget.last_paid_date &&
-        todayDate < renewalDate; // strictly before due date
+        effectiveDate < renewalDate; // strictly before due date
 
       // New cycle anchor:
       //  - Early payment: anchor to the existing renewal/due date so the
       //    paid 30-day cycle starts AFTER the current due date (due date unchanged).
-      //  - Late/on-time payment: anchor to today (new 30-day cycle from today).
-      const newAnchor = isEarly && renewalDate ? formatDateKey(renewalDate) : today;
+      //  - Late/on-time payment: anchor to the effective payment date.
+      const newAnchor = isEarly && renewalDate ? formatDateKey(renewalDate) : effective;
 
       // Invoice dates:
-      //  - invoice_date is always the day the admin confirms payment (today).
+      //  - invoice_date is the effective payment date.
       //  - Early: due_date stays as the existing renewal date (unchanged).
-      //  - Late/on-time: due_date = today (their new cycle starts now).
-      const invoiceDate = today;
-      const dueDate = isEarly && renewalDate ? formatDateKey(renewalDate) : today;
+      //  - Late/on-time: due_date = effective payment date.
+      const invoiceDate = effective;
+      const dueDate = isEarly && renewalDate ? formatDateKey(renewalDate) : effective;
 
       // 1. Update billing row: clear balance, activate, set new anchor.
       await (supabase.from('customer_billing' as any) as any)
         .update({ balance: 0, account_state: 'active', last_paid_date: newAnchor })
         .eq('user_id', payTarget.user_id);
 
-      // 2. Log payment history (always dated today).
+      // 2. Log payment history (dated effective payment date).
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: payTarget.user_id,
-        date: today,
+        date: effective,
         description: isEarly ? 'Monthly Subscription (Advance Payment)' : 'Monthly Subscription',
         method: payMethod,
         amount: payTarget.monthly_fee,
         status: 'PAID',
       });
+
 
       // 3. Remove any existing invoice(s) for the target month (dedupe by month
       //    of invoice_date), then insert the new PAID invoice for this payment.
