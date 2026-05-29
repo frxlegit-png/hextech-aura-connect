@@ -57,8 +57,6 @@ export function InvoicesTab() {
     const next = open.status?.toUpperCase() === 'PAID' ? 'UNPAID' : 'PAID';
     await (supabase.from('invoices' as any) as any).update({ status: next }).eq('id', open.id);
     if (next === 'PAID') {
-      const paidUntil = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString().slice(0, 10);
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: open.user_id,
         date: new Date().toISOString().slice(0, 10),
@@ -68,7 +66,7 @@ export function InvoicesTab() {
         status: 'PAID',
       });
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active', paid_until: paidUntil })
+        .update({ balance: 0, account_state: 'active', paid_until: null })
         .eq('user_id', open.user_id);
     }
     hexToast.success(`Invoice marked ${next}`);
