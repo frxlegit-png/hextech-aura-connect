@@ -24,6 +24,7 @@ interface BillingData {
   station_model: string | null;
   ip_address: string | null;
   frequency: string | null;
+  last_paid_date: string | null;
 }
 
 function formatDate(d: Date | string | null) {
@@ -48,7 +49,7 @@ export default function PortalDashboard() {
     if (!user) return;
     const load = async () => {
       const [{ data: bill }, { data: profile }, { data: pays }, { data: invs }] = await Promise.all([
-        supabase.from('customer_billing').select('account_id, billing_day, account_state, balance, monthly_fee, signal_strength, station_model, ip_address, frequency' as any).eq('user_id', user.id).maybeSingle(),
+        supabase.from('customer_billing').select('account_id, billing_day, account_state, balance, monthly_fee, signal_strength, station_model, ip_address, frequency, last_paid_date' as any).eq('user_id', user.id).maybeSingle(),
         supabase.from('profiles').select('full_name, email, phone').eq('user_id', user.id).maybeSingle(),
         (supabase.from('payment_history' as any) as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(20),
         (supabase.from('invoices' as any) as any).select('*').eq('user_id', user.id).order('invoice_date', { ascending: false }),
@@ -56,10 +57,11 @@ export default function PortalDashboard() {
       if (bill) {
         setBilling(bill as unknown as BillingData);
         const b: any = bill;
-        if (b.billing_day) {
+        if (b.billing_day && b.last_paid_date) {
           await ensureCurrentCycleInvoice({
             user_id: user.id,
             billing_day: b.billing_day,
+            last_paid_date: b.last_paid_date,
             monthly_fee: Number(b.monthly_fee ?? 0),
             client_name: profile?.full_name ?? fullName,
             client_email: profile?.email ?? user.email ?? null,
@@ -87,7 +89,8 @@ export default function PortalDashboard() {
   }, [user]);
 
   const billingDay = billing?.billing_day ?? null;
-  const state = effectiveState(billingDay, billing?.account_state) as AccountState;
+  const lastPaidDate = billing?.last_paid_date ?? null;
+  const state = effectiveState(billingDay, lastPaidDate, billing?.account_state) as AccountState;
   const accountId = billing?.account_id ?? '—';
   const monthly = (billing?.monthly_fee ?? 24.99).toFixed(2);
   const balance = (billing?.balance ?? 0).toFixed(2);
@@ -97,7 +100,7 @@ export default function PortalDashboard() {
     navigate('/');
   };
 
-  const billingDates = getBillingDates(billingDay);
+  const billingDates = getBillingDates(billingDay, lastPaidDate);
   const renewalDate = billingDates?.renewalDate ?? null;
   const cycleStartDate = billingDates?.startDate ?? null;
   const daysToRenewal = billingDates?.daysRemaining ?? null;

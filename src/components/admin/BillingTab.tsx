@@ -22,6 +22,7 @@ interface Client {
   balance: number;
   billing_day: number | null;
   account_state: string;
+  last_paid_date: string | null;
 }
 
 const stateVariant = (s: string): any => {
@@ -52,7 +53,7 @@ export function BillingTab() {
 
   const load = async () => {
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
-      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state');
+      .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, last_paid_date');
     if (!billing) return;
     const userIds = billing.map((b: any) => b.user_id);
     const { data: profiles } = await supabase
@@ -67,18 +68,20 @@ export function BillingTab() {
       balance: Number(b.balance ?? 0),
       billing_day: b.billing_day,
       account_state: b.account_state ?? 'active',
+      last_paid_date: b.last_paid_date ?? null,
       full_name: pmap.get(b.user_id)?.full_name ?? null,
       email: pmap.get(b.user_id)?.email ?? null,
       phone: pmap.get(b.user_id)?.phone ?? null,
     }));
     setRows(merged);
 
-    // Auto-generate current-cycle invoices for all clients with a billing_day
+    // Auto-generate current-cycle invoices only when the customer has a paid anchor
     for (const c of merged) {
-      if (c.billing_day) {
+      if (c.billing_day && c.last_paid_date) {
         ensureCurrentCycleInvoice({
           user_id: c.user_id,
           billing_day: c.billing_day,
+          last_paid_date: c.last_paid_date,
           monthly_fee: c.monthly_fee,
           client_name: c.full_name,
           client_email: c.email,
@@ -87,6 +90,7 @@ export function BillingTab() {
       }
     }
   };
+
 
   useEffect(() => {
     load();
@@ -119,19 +123,19 @@ export function BillingTab() {
     if (error) hexToast.error('Failed to save balance');
     else { hexToast.success('Balance updated'); load(); }
   };
-
   const confirmPaid = async () => {
     if (!payTarget) return;
     setConfirming(true);
     try {
-      // 1. clear balance and set active. Cycle dates are calculated live from billing_day.
       const todayDate = new Date();
+      const today = todayDate.toISOString().slice(0, 10);
+
+      // 1. Anchor the new billing cycle to today, clear balance, activate.
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active' })
+        .update({ balance: 0, account_state: 'active', last_paid_date: today })
         .eq('user_id', payTarget.user_id);
 
-      // 2. log payment history
-      const today = todayDate.toISOString().slice(0, 10);
+      // 2. Log payment history
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: payTarget.user_id,
         date: today,
@@ -141,13 +145,21 @@ export function BillingTab() {
         status: 'PAID',
       });
 
-      // 3. flip current-cycle invoice to PAID (if exists)
+      // 3. Generate the new cycle invoice (anchored to today) and mark it PAID.
       if (payTarget.billing_day) {
-        const cycle = formatDateKey(currentCycleStart(payTarget.billing_day));
+        await ensureCurrentCycleInvoice({
+          user_id: payTarget.user_id,
+          billing_day: payTarget.billing_day,
+          last_paid_date: today,
+          monthly_fee: payTarget.monthly_fee,
+          client_name: payTarget.full_name,
+          client_email: payTarget.email,
+          client_phone: payTarget.phone,
+        });
         await (supabase.from('invoices' as any) as any)
           .update({ status: 'PAID' })
           .eq('user_id', payTarget.user_id)
-          .eq('invoice_date', cycle);
+          .eq('invoice_date', today);
       }
 
       hexToast.success(`Payment confirmed for ${payTarget.full_name ?? payTarget.email ?? 'client'}. Account set to Active.`);
@@ -158,6 +170,7 @@ export function BillingTab() {
       setConfirming(false);
     }
   };
+
 
 
   return (
@@ -192,7 +205,7 @@ export function BillingTab() {
           </thead>
           <tbody>
             {filtered.map((c, i) => {
-              const state = effectiveState(c.billing_day, c.account_state);
+              const state = effectiveState(c.billing_day, c.last_paid_date, c.account_state);
               return (
                 <tr
                   key={c.user_id}

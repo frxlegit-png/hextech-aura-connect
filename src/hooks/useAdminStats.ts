@@ -41,7 +41,7 @@ export function useAdminStats(): AdminStats {
     const prevMonth = ym(prevDate);
 
     const [billingRes, revenueRes, ticketsRes, newProfRes] = await Promise.all([
-      supabase.from('customer_billing').select('billing_day, account_state'),
+      supabase.from('customer_billing').select('billing_day, account_state, last_paid_date'),
       supabase.from('monthly_revenue').select('month, amount'),
       supabase.from('tickets').select('status'),
       supabase.from('profiles').select('user_id, created_at').gte('created_at', startMonth),
@@ -50,7 +50,7 @@ export function useAdminStats(): AdminStats {
     const billing = billingRes.data ?? [];
     let active = 0;
     for (const b of billing as any[]) {
-      const eff = effectiveState(b.billing_day, b.account_state);
+      const eff = effectiveState(b.billing_day, b.last_paid_date, b.account_state);
       if (eff === 'active' || eff === 'expiring' || eff === 'pending') active++;
     }
 
