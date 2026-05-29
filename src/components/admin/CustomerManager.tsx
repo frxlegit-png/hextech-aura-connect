@@ -21,6 +21,7 @@ interface BillingRow {
   balance: number;
   monthly_fee: number;
   password_plain: string | null;
+  last_paid_date: string | null;
 }
 interface ProfileRow {
   user_id: string;
