@@ -140,41 +140,72 @@ export function BillingTab() {
     setConfirming(true);
     try {
       const todayDate = new Date();
-      const today = todayDate.toISOString().slice(0, 10);
+      const today = formatDateKey(todayDate);
 
-      // 1. Anchor the new billing cycle to today, clear balance, activate.
+      // Determine early vs late payment relative to current renewal date.
+      const { renewalDate } = getBillingDates(payTarget.billing_day, payTarget.last_paid_date, todayDate);
+      const isEarly =
+        !!renewalDate &&
+        !!payTarget.last_paid_date &&
+        todayDate < renewalDate; // strictly before due date
+
+      // New cycle anchor:
+      //  - Early payment: anchor to the existing renewal/due date so the
+      //    paid 30-day cycle starts AFTER the current due date (due date unchanged).
+      //  - Late/on-time payment: anchor to today (new 30-day cycle from today).
+      const newAnchor = isEarly && renewalDate ? formatDateKey(renewalDate) : today;
+
+      // Invoice dates:
+      //  - invoice_date is always the day the admin confirms payment (today).
+      //  - Early: due_date stays as the existing renewal date (unchanged).
+      //  - Late/on-time: due_date = today (their new cycle starts now).
+      const invoiceDate = today;
+      const dueDate = isEarly && renewalDate ? formatDateKey(renewalDate) : today;
+
+      // 1. Update billing row: clear balance, activate, set new anchor.
       await (supabase.from('customer_billing' as any) as any)
-        .update({ balance: 0, account_state: 'active', last_paid_date: today })
+        .update({ balance: 0, account_state: 'active', last_paid_date: newAnchor })
         .eq('user_id', payTarget.user_id);
 
-      // 2. Log payment history
+      // 2. Log payment history (always dated today).
       await (supabase.from('payment_history' as any) as any).insert({
         user_id: payTarget.user_id,
         date: today,
-        description: 'Monthly Subscription',
+        description: isEarly ? 'Monthly Subscription (Advance Payment)' : 'Monthly Subscription',
         method: payMethod,
         amount: payTarget.monthly_fee,
         status: 'PAID',
       });
 
-      // 3. Generate the new cycle invoice (anchored to today) and mark it PAID.
-      if (payTarget.billing_day) {
-        await ensureCurrentCycleInvoice({
-          user_id: payTarget.user_id,
-          billing_day: payTarget.billing_day,
-          last_paid_date: today,
-          monthly_fee: payTarget.monthly_fee,
-          client_name: payTarget.full_name,
-          client_email: payTarget.email,
-          client_phone: payTarget.phone,
-        });
-        await (supabase.from('invoices' as any) as any)
-          .update({ status: 'PAID' })
-          .eq('user_id', payTarget.user_id)
-          .eq('invoice_date', today);
-      }
+      // 3. Remove any existing invoice(s) for the target month (dedupe by month
+      //    of invoice_date), then insert the new PAID invoice for this payment.
+      const ym = invoiceDate.slice(0, 7);
+      const [y, m] = ym.split('-').map(Number);
+      const nextFirst = new Date(y, m, 1);
+      const nextFirstStr = `${nextFirst.getFullYear()}-${String(nextFirst.getMonth() + 1).padStart(2, '0')}-01`;
+      await (supabase.from('invoices' as any) as any)
+        .delete()
+        .eq('user_id', payTarget.user_id)
+        .gte('invoice_date', `${ym}-01`)
+        .lt('invoice_date', nextFirstStr);
 
-      hexToast.success(`Payment confirmed for ${payTarget.full_name ?? payTarget.email ?? 'client'}. Account set to Active.`);
+      await (supabase.from('invoices' as any) as any).insert({
+        user_id: payTarget.user_id,
+        invoice_date: invoiceDate,
+        due_date: dueDate,
+        client_name: payTarget.full_name,
+        client_email: payTarget.email,
+        client_phone: payTarget.phone,
+        plan: 'Residential Unlimited',
+        amount: payTarget.monthly_fee,
+        status: 'PAID',
+      });
+
+      hexToast.success(
+        isEarly
+          ? `Advance payment recorded. Next cycle starts ${formatDateKey(renewalDate!)}.`
+          : `Payment confirmed for ${payTarget.full_name ?? payTarget.email ?? 'client'}. Account set to Active.`,
+      );
       setPayTarget(null);
       setPayMethod('Cash');
       load();
