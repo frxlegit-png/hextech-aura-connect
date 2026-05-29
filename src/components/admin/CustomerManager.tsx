@@ -80,6 +80,12 @@ export function CustomerManager() {
     }
   };
 
+  const filteredUsers = searchQuery.trim()
+    ? users.filter((u) =>
+        (u.profile?.full_name ?? '').toLowerCase().includes(searchQuery.trim().toLowerCase())
+      )
+    : users;
+
   return (
     <div className="space-y-6">
       <HexCard>
