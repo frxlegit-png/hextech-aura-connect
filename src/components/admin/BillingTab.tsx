@@ -171,6 +171,10 @@ export function BillingTab() {
   };
   const confirmPaid = async () => {
     if (!payTarget) return;
+    if (payInfo?.alreadyPaidAhead) {
+      hexToast.error('Client already paid one cycle in advance. Wait until the current due date.');
+      return;
+    }
     setConfirming(true);
     try {
       // Effective payment date: admin-selected date (defaults to today).
