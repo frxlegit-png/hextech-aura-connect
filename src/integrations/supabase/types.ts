@@ -58,6 +58,7 @@ export type Database = {
           created_at: string
           frequency: string | null
           ip_address: string | null
+          last_paid_date: string | null
           monthly_fee: number
           paid_until: string | null
           password_plain: string | null
@@ -76,6 +77,7 @@ export type Database = {
           created_at?: string
           frequency?: string | null
           ip_address?: string | null
+          last_paid_date?: string | null
           monthly_fee?: number
           paid_until?: string | null
           password_plain?: string | null
@@ -94,6 +96,7 @@ export type Database = {
           created_at?: string
           frequency?: string | null
           ip_address?: string | null
+          last_paid_date?: string | null
           monthly_fee?: number
           paid_until?: string | null
           password_plain?: string | null
