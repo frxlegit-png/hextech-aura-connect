@@ -351,6 +351,8 @@ function BillingEditor({
     if (ok) {
       hexToast.success(`Billing cycle updated for ${user.profile?.full_name ?? user.email}.`);
       onSaved();
+    } else {
+      hexToast.error('Failed to save billing cycle. Please try again.');
     }
   };
 
