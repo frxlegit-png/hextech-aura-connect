@@ -4,7 +4,7 @@ import { HexCard } from '@/components/hex/HexCard';
 import { HexBadge } from '@/components/hex/HexBadge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, Trash2 } from 'lucide-react';
 import { InvoiceModal, InvoiceData } from '@/components/portal/InvoiceModal';
 import { hexToast } from '@/components/hex/HexToast';
 import { formatInvoiceDate } from '@/lib/invoices';
@@ -20,17 +20,45 @@ export function InvoicesTab() {
   const [open, setOpen] = useState<InvoiceRow | null>(null);
 
   const load = async () => {
+    // Last 2 months window (covers current month and previous calendar month)
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 2);
+    cutoff.setHours(0, 0, 0, 0);
+    const cutoffStr = cutoff.toISOString().slice(0, 10);
+
     const { data: invs } = await (supabase.from('invoices' as any) as any)
       .select('*')
+      .gte('invoice_date', cutoffStr)
       .order('invoice_date', { ascending: false })
       .limit(500);
     if (!invs) return;
-    const userIds = Array.from(new Set(invs.map((i: any) => i.user_id)));
+
+    // Dedupe: one invoice per user per (year-month). Keep most recent invoice_date, then newest created_at.
+    const sorted = [...invs].sort((a: any, b: any) => {
+      const d = (b.invoice_date || '').localeCompare(a.invoice_date || '');
+      if (d !== 0) return d;
+      return (b.created_at || '').localeCompare(a.created_at || '');
+    });
+    const seen = new Set<string>();
+    const dupes: string[] = [];
+    const unique: any[] = [];
+    for (const inv of sorted) {
+      const ym = (inv.invoice_date || '').slice(0, 7);
+      const key = `${inv.user_id}|${ym}`;
+      if (seen.has(key)) { dupes.push(inv.id); continue; }
+      seen.add(key);
+      unique.push(inv);
+    }
+    if (dupes.length) {
+      await (supabase.from('invoices' as any) as any).delete().in('id', dupes);
+    }
+
+    const userIds = Array.from(new Set(unique.map((i: any) => i.user_id)));
     const { data: billing } = await (supabase.from('customer_billing' as any) as any)
       .select('user_id, account_id')
       .in('user_id', userIds);
     const idMap = new Map((billing ?? []).map((b: any) => [b.user_id, b.account_id as string | null]));
-    setRows(invs.map((i: any) => ({ ...i, account_id: idMap.get(i.user_id) ?? null })));
+    setRows(unique.map((i: any) => ({ ...i, account_id: idMap.get(i.user_id) ?? null })));
   };
 
   useEffect(() => {
@@ -74,6 +102,17 @@ export function InvoicesTab() {
     load();
   };
 
+  const deleteInvoice = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!confirm('Delete this invoice? This cannot be undone.')) return;
+    const { error } = await (supabase.from('invoices' as any) as any).delete().eq('id', id);
+    if (error) { hexToast.error('Failed to delete invoice'); return; }
+    hexToast.success('Invoice deleted');
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    if (open?.id === id) setOpen(null);
+  };
+
+
   return (
     <HexCard>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -99,6 +138,7 @@ export function InvoicesTab() {
               <th className="px-3 py-2.5 text-left">Plan</th>
               <th className="px-3 py-2.5 text-right">Amount</th>
               <th className="px-3 py-2.5 text-left">Status</th>
+              <th className="px-3 py-2.5 text-right w-12"></th>
             </tr>
           </thead>
           <tbody>
@@ -119,11 +159,22 @@ export function InvoicesTab() {
                   <td className="px-3 py-2.5">
                     <HexBadge variant={paid ? 'paid' : ('pending' as any)}>{paid ? 'PAID' : 'UNPAID'}</HexBadge>
                   </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => deleteInvoice(r.id, e)}
+                      aria-label="Delete invoice"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </td>
                 </tr>
               );
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">No invoices yet.</td></tr>
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-xs text-muted-foreground">No invoices in the last 2 months.</td></tr>
             )}
           </tbody>
         </table>
