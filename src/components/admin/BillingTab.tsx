@@ -304,7 +304,7 @@ export function BillingTab() {
                       size="sm"
                       variant="outline"
                       className="h-7 px-3 text-[10px] tracking-[0.15em] border-green-500/50 text-green-400 hover:bg-green-500/10 hover:text-green-300"
-                      onClick={() => { setPayTarget(c); setPayMethod('Cash'); }}
+                      onClick={() => { setPayTarget(c); setPayMethod('Cash'); setPayDate(formatDateKey(new Date())); }}
                     >
                       <DollarSign className="w-3 h-3 mr-1" /> PAID
                     </Button>
