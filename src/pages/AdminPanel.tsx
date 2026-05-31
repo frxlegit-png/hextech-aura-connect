@@ -16,8 +16,6 @@ import { RevenueManager } from '@/components/admin/RevenueManager';
 import { BillingTab } from '@/components/admin/BillingTab';
 import { InvoicesTab } from '@/components/admin/InvoicesTab';
 import { useAdminStats } from '@/hooks/useAdminStats';
-import { NotificationBanner } from '@/components/NotificationBanner';
-import { supabase as supa } from '@/integrations/supabase/client';
 
 interface TicketRow {
   id: string;
@@ -50,8 +48,6 @@ const AdminPanel = () => {
       if (data) setTickets(data as TicketRow[]);
     };
     load();
-    // Fire expiry/7-day checks on dashboard load (also runs daily via cron).
-    supa.functions.invoke('check-expirations').catch(() => {});
     const ch = supabase
       .channel('tickets_admin')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, load)
@@ -145,10 +141,6 @@ const AdminPanel = () => {
             <h2 className="text-3xl font-bold text-foreground">Operations Dashboard</h2>
             <p className="text-muted-foreground text-sm mt-1">Live data from your customer database.</p>
           </div>
-
-          <NotificationBanner role="admin" />
-
-
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {KPIS.map((kpi, i) => (

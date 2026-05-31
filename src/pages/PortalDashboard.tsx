@@ -13,7 +13,6 @@ import {
 } from '@/lib/billing';
 
 import { ensureCurrentCycleInvoice, dedupeUserInvoicesByMonth } from '@/lib/invoices';
-import { NotificationBanner } from '@/components/NotificationBanner';
 import './PortalDashboard.css';
 
 type AccountState = 'active' | 'suspended' | 'expiring' | 'expired' | 'pending';
@@ -213,9 +212,6 @@ export default function PortalDashboard() {
             <div className={`badge-text ${cfg.badge.tone !== 'green' ? cfg.badge.tone : ''}`}>{cfg.badge.text}</div>
           </div>
         </div>
-
-        <NotificationBanner role="customer" />
-
 
         {cfg.alert && (
           <div className={`alert ${cfg.alert.tone}`}>

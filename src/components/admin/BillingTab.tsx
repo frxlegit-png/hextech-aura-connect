@@ -208,16 +208,9 @@ export function BillingTab() {
       const invoiceDate = effective;
       const dueDate = isEarly && renewalDate ? formatDateKey(renewalDate) : effective;
 
-      // 1. Update billing row: clear balance, activate, set new anchor,
-      //    and reset notification flags so next cycle can re-fire.
+      // 1. Update billing row: clear balance, activate, set new anchor.
       await (supabase.from('customer_billing' as any) as any)
-        .update({
-          balance: 0,
-          account_state: 'active',
-          last_paid_date: newAnchor,
-          expiry_notified: false,
-          seven_day_notified: false,
-        })
+        .update({ balance: 0, account_state: 'active', last_paid_date: newAnchor })
         .eq('user_id', payTarget.user_id);
 
       // 2. Log payment history (dated effective payment date).
