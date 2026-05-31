@@ -56,12 +56,14 @@ export type Database = {
           billing_end: string | null
           billing_start: string | null
           created_at: string
+          expiry_notified: boolean
           frequency: string | null
           ip_address: string | null
           last_paid_date: string | null
           monthly_fee: number
           paid_until: string | null
           password_plain: string | null
+          seven_day_notified: boolean
           signal_strength: string | null
           station_model: string | null
           updated_at: string
@@ -75,12 +77,14 @@ export type Database = {
           billing_end?: string | null
           billing_start?: string | null
           created_at?: string
+          expiry_notified?: boolean
           frequency?: string | null
           ip_address?: string | null
           last_paid_date?: string | null
           monthly_fee?: number
           paid_until?: string | null
           password_plain?: string | null
+          seven_day_notified?: boolean
           signal_strength?: string | null
           station_model?: string | null
           updated_at?: string
@@ -94,12 +98,14 @@ export type Database = {
           billing_end?: string | null
           billing_start?: string | null
           created_at?: string
+          expiry_notified?: boolean
           frequency?: string | null
           ip_address?: string | null
           last_paid_date?: string | null
           monthly_fee?: number
           paid_until?: string | null
           password_plain?: string | null
+          seven_day_notified?: boolean
           signal_strength?: string | null
           station_model?: string | null
           updated_at?: string
@@ -261,6 +267,39 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          endpoint: string
+          id: string
+          role: string
+          subscription: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          endpoint: string
+          id?: string
+          role: string
+          subscription: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          endpoint?: string
+          id?: string
+          role?: string
+          subscription?: Json
           updated_at?: string
           user_id?: string
         }

@@ -57,16 +57,20 @@ export function SupportTickets({ userId, customerName }: Props) {
     if (!subject.trim()) return;
     setSubmitting(true);
     const code = 'HTX-' + Date.now().toString(36).toUpperCase().slice(-6);
-    const { error } = await supabase.from('tickets').insert({
+    const { data: inserted, error } = await supabase.from('tickets').insert({
       user_id: userId,
       customer_name: customerName,
       subject: subject.trim(),
       message: message.trim() || null,
       status: 'pending',
       ticket_code: code,
-    });
+    }).select('id').maybeSingle();
     setSubmitting(false);
     if (error) { hexToast.error(error.message); return; }
+    // Fire admin push notification (non-blocking).
+    if (inserted?.id) {
+      supabase.functions.invoke('notify-new-ticket', { body: { ticket_id: inserted.id } }).catch(() => {});
+    }
     hexToast.success(`Ticket ${code} submitted`);
     setSubject(''); setMessage('');
     load();
