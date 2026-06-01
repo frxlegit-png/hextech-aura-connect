@@ -215,8 +215,6 @@ export function BillingTab() {
           balance: 0,
           account_state: 'active',
           last_paid_date: newAnchor,
-          expiry_notified: false,
-          seven_day_notified: false,
         })
         .eq('user_id', payTarget.user_id);
 
