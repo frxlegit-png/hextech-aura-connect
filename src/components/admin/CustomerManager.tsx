@@ -220,6 +220,7 @@ function CustomerDetailsEditor({
   const initial = {
     full_name: user.profile?.full_name ?? '',
     email: user.email ?? '',
+    phone: user.profile?.phone ?? '',
     password: '',
   };
   const [form, setForm] = useState(initial);
