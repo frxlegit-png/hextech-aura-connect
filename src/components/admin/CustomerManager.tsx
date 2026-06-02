@@ -20,7 +20,7 @@ interface BillingRow {
   account_state: string;
   balance: number;
   monthly_fee: number;
-  password_plain: string | null;
+  
   last_paid_date: string | null;
 }
 interface ProfileRow {
@@ -221,7 +221,7 @@ function CustomerDetailsEditor({
     full_name: user.profile?.full_name ?? '',
     email: user.email ?? '',
     phone: user.profile?.phone ?? '',
-    password: user.billing?.password_plain ?? '',
+    password: '',
   };
   const [form, setForm] = useState(initial);
   const [showPwd, setShowPwd] = useState(false);
