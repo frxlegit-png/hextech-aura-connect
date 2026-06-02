@@ -61,7 +61,6 @@ export type Database = {
           last_paid_date: string | null
           monthly_fee: number
           paid_until: string | null
-          password_plain: string | null
           signal_strength: string | null
           station_model: string | null
           updated_at: string
@@ -80,7 +79,6 @@ export type Database = {
           last_paid_date?: string | null
           monthly_fee?: number
           paid_until?: string | null
-          password_plain?: string | null
           signal_strength?: string | null
           station_model?: string | null
           updated_at?: string
@@ -99,7 +97,6 @@ export type Database = {
           last_paid_date?: string | null
           monthly_fee?: number
           paid_until?: string | null
-          password_plain?: string | null
           signal_strength?: string | null
           station_model?: string | null
           updated_at?: string
