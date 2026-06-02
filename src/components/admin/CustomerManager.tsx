@@ -36,6 +36,7 @@ interface UserRow {
   roles: string[];
   profile: ProfileRow | null;
   billing: BillingRow | null;
+  password_plain?: string | null;
 }
 
 export function CustomerManager() {
