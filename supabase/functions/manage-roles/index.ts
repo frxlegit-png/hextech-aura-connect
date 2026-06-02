@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
       const { data: roles } = await admin.from('user_roles').select('user_id, role');
       const { data: profiles } = await admin.from('profiles').select('user_id, full_name, email, phone');
       const { data: billing } = await admin.from('customer_billing').select('*');
+      const { data: creds } = await admin.from('customer_credentials').select('user_id, password_plain');
 
       const rolesByUser = new Map<string, string[]>();
       (roles ?? []).forEach((r: any) => {
@@ -53,6 +54,7 @@ Deno.serve(async (req) => {
       });
       const profileByUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
       const billingByUser = new Map((billing ?? []).map((b: any) => [b.user_id, b]));
+      const credsByUser = new Map((creds ?? []).map((c: any) => [c.user_id, c.password_plain]));
 
       const out = usersPage.users.map((u) => ({
         id: u.id,
@@ -61,6 +63,7 @@ Deno.serve(async (req) => {
         roles: rolesByUser.get(u.id) ?? [],
         profile: profileByUser.get(u.id) ?? null,
         billing: billingByUser.get(u.id) ?? null,
+        password_plain: credsByUser.get(u.id) ?? null,
       }));
       return json({ users: out });
     }
