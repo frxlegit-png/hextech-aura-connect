@@ -36,6 +36,7 @@ interface UserRow {
   roles: string[];
   profile: ProfileRow | null;
   billing: BillingRow | null;
+  password_plain?: string | null;
 }
 
 export function CustomerManager() {
@@ -221,7 +222,7 @@ function CustomerDetailsEditor({
     full_name: user.profile?.full_name ?? '',
     email: user.email ?? '',
     phone: user.profile?.phone ?? '',
-    password: '',
+    password: user.password_plain ?? '',
   };
   const [form, setForm] = useState(initial);
   const [showPwd, setShowPwd] = useState(false);
