@@ -23,6 +23,21 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Force HTTPS on production custom domains
+      (function () {
+        if (
+          typeof window !== 'undefined' &&
+          window.location.protocol === 'http:' &&
+          window.location.hostname !== 'localhost' &&
+          window.location.hostname !== '127.0.0.1'
+        ) {
+          window.location.replace(
+            'https://' + window.location.host + window.location.pathname + window.location.search + window.location.hash
+          );
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
