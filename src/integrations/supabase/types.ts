@@ -104,6 +104,24 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_credentials: {
+        Row: {
+          password_plain: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          password_plain: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          password_plain?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           amount: number
