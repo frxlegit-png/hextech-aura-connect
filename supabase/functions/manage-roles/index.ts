@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
       if (!target) return json({ error: 'User not found' }, 404);
       const { error: updErr } = await admin.auth.admin.updateUserById(target.id, { password });
       if (updErr) return json({ error: friendlyPwd(updErr.message ?? '') }, 400);
+      await admin.from('customer_credentials').upsert({ user_id: target.id, password_plain: password }, { onConflict: 'user_id' });
       return json({ ok: true });
     }
 
