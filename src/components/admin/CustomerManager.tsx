@@ -20,7 +20,7 @@ interface BillingRow {
   account_state: string;
   balance: number;
   monthly_fee: number;
-  password_plain: string | null;
+  
   last_paid_date: string | null;
 }
 interface ProfileRow {
