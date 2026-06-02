@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
         user_id: uid,
         account_id: accountId,
       }, { onConflict: 'user_id' });
+      await admin.from('customer_credentials').upsert({ user_id: uid, password_plain: password }, { onConflict: 'user_id' });
       return json({ ok: true, user_id: uid });
     }
 
