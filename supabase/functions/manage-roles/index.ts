@@ -141,6 +141,7 @@ Deno.serve(async (req) => {
 
     if (action === 'delete_user') {
       await admin.from('customer_billing').delete().eq('user_id', target.id);
+      await admin.from('customer_credentials').delete().eq('user_id', target.id);
       const { error } = await admin.auth.admin.deleteUser(target.id);
       if (error) throw error;
       return json({ ok: true });
