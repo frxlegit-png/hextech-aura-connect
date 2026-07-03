@@ -79,6 +79,7 @@ export function AccountsTab() {
   const [clients, setClients] = useState<Client[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [revenueRows, setRevenueRows] = useState<RevenueRow[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState<{ client: Client; monthKey: string } | null>(null);
   const [payMethod, setPayMethod] = useState<string>('EcoCash');
@@ -89,13 +90,15 @@ export function AccountsTab() {
 
 
   const load = async () => {
-    const [{ data: billing }, { data: profiles }, { data: pays }, { data: sums }] = await Promise.all([
+    const [{ data: billing }, { data: profiles }, { data: pays }, { data: sums }, { data: revs }] = await Promise.all([
       (supabase.from('customer_billing' as any) as any)
         .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, last_paid_date, created_at'),
       supabase.from('profiles').select('user_id, full_name, phone'),
       (supabase.from('payment_history' as any) as any).select('id, user_id, date, amount, method, status'),
       (supabase.from('business_summary' as any) as any).select('month, expenses, investments'),
+      (supabase.from('monthly_revenue' as any) as any).select('id, month, amount, logged_by'),
     ]);
+
     const pmap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
     const merged: Client[] = (billing ?? []).map((b: any) => {
       const j = new Date(b.created_at);
