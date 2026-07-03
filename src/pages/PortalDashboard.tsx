@@ -13,6 +13,7 @@ import {
 } from '@/lib/billing';
 
 import { ensureCurrentCycleInvoice, dedupeUserInvoicesByMonth } from '@/lib/invoices';
+import { ensureBillingDayInvoice } from '@/lib/paymentCascade';
 
 import './PortalDashboard.css';
 
@@ -71,16 +72,28 @@ export default function PortalDashboard() {
           monthly_fee: Number(b.monthly_fee ?? 0),
         }).catch(() => {});
 
-        if (b.billing_day && b.last_paid_date) {
-          await ensureCurrentCycleInvoice({
+        if (b.billing_day) {
+          // Auto-generate an UNPAID invoice for this billing month if the
+          // billing day has passed and none exists yet.
+          await ensureBillingDayInvoice({
             user_id: user.id,
+            full_name: profile?.full_name ?? fullName,
+            email: profile?.email ?? user.email ?? null,
+            phone: profile?.phone ?? null,
             billing_day: b.billing_day,
-            last_paid_date: b.last_paid_date,
             monthly_fee: Number(b.monthly_fee ?? 0),
-            client_name: profile?.full_name ?? fullName,
-            client_email: profile?.email ?? user.email ?? null,
-            client_phone: profile?.phone ?? null,
           });
+          if (b.last_paid_date) {
+            await ensureCurrentCycleInvoice({
+              user_id: user.id,
+              billing_day: b.billing_day,
+              last_paid_date: b.last_paid_date,
+              monthly_fee: Number(b.monthly_fee ?? 0),
+              client_name: profile?.full_name ?? fullName,
+              client_email: profile?.email ?? user.email ?? null,
+              client_phone: profile?.phone ?? null,
+            });
+          }
           const { data: invs2 } = await (supabase.from('invoices' as any) as any)
             .select('*').eq('user_id', user.id).order('invoice_date', { ascending: false });
           if (invs2) {
