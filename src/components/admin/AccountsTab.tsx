@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
-import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, Search, Loader2, AlertCircle, X } from 'lucide-react';
 import { effectiveState } from '@/lib/billing';
 import { applyMonthlyPayment } from '@/lib/paymentCascade';
 
