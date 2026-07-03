@@ -51,14 +51,53 @@ export function RevenueManager() {
     if (data) setRows(data as RevenueRow[]);
   };
 
+  /**
+   * When a month rolls over, auto-log the just-ended month on the revenue tab
+   * (if it doesn't already have a row) by summing PAID payment_history for
+   * that month. Idempotent — only inserts when no row exists yet.
+   */
+  const ensurePreviousMonthLogged = async () => {
+    const now = new Date();
+    const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const prevKey = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`;
+    const startIso = new Date(prev.getFullYear(), prev.getMonth(), 1).toISOString();
+    const endIso = new Date(prev.getFullYear(), prev.getMonth() + 1, 1).toISOString();
+
+    const { data: existing } = await supabase
+      .from('monthly_revenue')
+      .select('id')
+      .eq('month', prevKey)
+      .limit(1);
+    if (existing && existing.length > 0) return;
+
+    const { data: pays } = await (supabase.from('payment_history' as any) as any)
+      .select('amount, status')
+      .gte('date', startIso)
+      .lt('date', endIso);
+    const sum = ((pays as any[]) ?? [])
+      .filter((p) => (p.status || '').toUpperCase() === 'PAID')
+      .reduce((s, p) => s + Number(p.amount ?? 0), 0);
+
+    await supabase.from('monthly_revenue').insert({
+      month: prevKey,
+      amount: sum,
+      logged_by: 'auto',
+      updated_at: new Date().toISOString(),
+    });
+  };
+
   useEffect(() => {
-    refresh();
+    (async () => {
+      await ensurePreviousMonthLogged();
+      await refresh();
+    })();
     const ch = supabase
       .channel('monthly_revenue_admin')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_revenue' }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
 
   const handleSave = async () => {
     const amt = parseFloat(amount);
