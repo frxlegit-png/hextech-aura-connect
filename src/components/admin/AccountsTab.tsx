@@ -168,17 +168,22 @@ export function AccountsTab() {
   }, [payments]);
 
   const summaryMap = useMemo(() => new Map(summaries.map((s) => [s.month, s])), [summaries]);
+  const revenueMap = useMemo(
+    () => new Map(revenueRows.map((r) => [r.month, r])),
+    [revenueRows],
+  );
 
-  const revenueFor = (monthKey: string) => {
-    let sum = 0;
+  const paymentCountByMonth = useMemo(() => {
+    const idx = new Map<string, number>();
     for (const p of payments) {
       if ((p.status || '').toUpperCase() !== 'PAID') continue;
       const d = new Date(p.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      if (key === monthKey) sum += Number(p.amount ?? 0);
+      idx.set(key, (idx.get(key) ?? 0) + 1);
     }
-    return sum;
-  };
+    return idx;
+  }, [payments]);
+
 
   const toggleExpand = (uid: string) => {
     setExpanded((prev) => {
