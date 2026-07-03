@@ -337,7 +337,7 @@ export function AccountsTab() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
               {clients.length === 0 && (
