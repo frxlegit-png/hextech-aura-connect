@@ -612,17 +612,19 @@ export function AccountsTab() {
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-green-400">REVENUE</td>
                 {monthKeys.map((mk) => {
                   const rev = revenueMap.get(mk);
-                  const count = paymentCountByMonth.get(mk) ?? 0;
+                  const stats = paymentStatsByMonth.get(mk) ?? { count: 0, sum: 0 };
                   return (
                     <td key={mk} className="px-1 py-1">
                       <RevenueCell
                         row={rev}
-                        paymentCount={count}
+                        paymentCount={stats.count}
+                        computedSum={stats.sum}
                         onSave={(v) => saveRevenue(mk, v)}
                       />
                     </td>
                   );
                 })}
+
               </tr>
 
               <tr className="border-t border-border/40 bg-red-500/5">
