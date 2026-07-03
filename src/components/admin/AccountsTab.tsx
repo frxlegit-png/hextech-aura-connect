@@ -266,6 +266,31 @@ export function AccountsTab() {
     else load();
   };
 
+  const filteredClients = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return clients.filter((c) => {
+      if (stateFilter !== 'all') {
+        const eff = effectiveState(c.billing_day, c.last_paid_date, c.account_state).toLowerCase();
+        if (eff !== stateFilter) return false;
+      }
+      if (!q) return true;
+      return (
+        (c.full_name ?? '').toLowerCase().includes(q) ||
+        (c.account_id ?? '').toLowerCase().includes(q) ||
+        (c.phone ?? '').toLowerCase().includes(q)
+      );
+    });
+  }, [clients, search, stateFilter]);
+
+  const STATE_FILTERS = [
+    { key: 'all', label: 'All' },
+    { key: 'active', label: 'Active' },
+    { key: 'expiring', label: 'Expiring' },
+    { key: 'expired', label: 'Expired' },
+    { key: 'suspended', label: 'Suspended' },
+    { key: 'pending', label: 'Pending' },
+  ] as const;
+
   return (
     <div className="space-y-6">
       {/* ============ SECTION 1: CLIENT ACCOUNTS ============ */}
@@ -275,7 +300,45 @@ export function AccountsTab() {
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">// Section 01</div>
             <div className="text-sm font-semibold text-foreground">Client Accounts</div>
           </div>
-          <div className="text-[10px] font-mono text-muted-foreground">{clients.length} clients</div>
+          <div className="text-[10px] font-mono text-muted-foreground">
+            {filteredClients.length} / {clients.length} clients
+          </div>
+        </div>
+
+        {/* Search + filter controls */}
+        <div className="border-b border-border px-4 py-3 flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, Account ID, or phone…"
+              className="pl-9 pr-9 h-9"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex gap-1 overflow-x-auto">
+            {STATE_FILTERS.map((f) => (
+              <Button
+                key={f.key}
+                size="sm"
+                variant={stateFilter === f.key ? 'default' : 'outline'}
+                onClick={() => setStateFilter(f.key)}
+                className="uppercase tracking-[0.12em] text-[10px] h-8"
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -293,14 +356,15 @@ export function AccountsTab() {
               </tr>
             </thead>
             <tbody>
-              {clients.map((c, idx) => {
+              {filteredClients.map((c, idx) => {
                 const isOpen = expanded.has(c.user_id);
                 const eff = effectiveState(c.billing_day, c.last_paid_date, c.account_state);
                 const paidSet = paidIndex.get(c.user_id) ?? new Set<string>();
                 const currentPaid = paidSet.has(currentMonthKey);
                 const clientMonths = monthKeys.filter((k) => k >= c.joined);
-                const prevDay = idx > 0 ? clients[idx - 1].billing_day : null;
+                const prevDay = idx > 0 ? filteredClients[idx - 1].billing_day : null;
                 const showDivider = idx === 0 || c.billing_day !== prevDay;
+
                 const dividerLabel = c.billing_day ? `— DAY ${c.billing_day} —` : '— NO BILLING DAY —';
                 return (
                   <Fragment key={c.user_id}>
