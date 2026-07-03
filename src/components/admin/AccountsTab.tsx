@@ -554,8 +554,11 @@ export function AccountsTab() {
                                     <MonthCheck
                                       paid={paid}
                                       disabled={!c.billing_day}
-                                      onClick={() => !paid && openConfirm(c, mk)}
+                                      onClick={() =>
+                                        paid ? openReverse(c, mk) : openConfirm(c, mk)
+                                      }
                                     />
+
                                   </div>
                                 );
                               })}
