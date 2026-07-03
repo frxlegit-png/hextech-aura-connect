@@ -94,6 +94,7 @@ export function RevenueManager() {
     const ch = supabase
       .channel('monthly_revenue_admin')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_revenue' }, () => refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
