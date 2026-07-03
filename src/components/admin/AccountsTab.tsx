@@ -11,6 +11,8 @@ import { hexToast } from '@/components/hex/HexToast';
 import { ChevronDown, ChevronRight, Check, Search, Loader2, AlertCircle, X } from 'lucide-react';
 import { effectiveState } from '@/lib/billing';
 import { applyMonthlyPayment } from '@/lib/paymentCascade';
+import { useAuth } from '@/hooks/useAuth';
+
 
 interface Client {
   user_id: string;
@@ -40,6 +42,14 @@ interface Summary {
   investments: number;
 }
 
+interface RevenueRow {
+  id: string;
+  month: string;
+  amount: number;
+  logged_by: string | null;
+}
+
+
 const MONTH_LABELS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const METHODS = ['EcoCash', 'Bank Transfer', 'Omari', 'Cash'] as const;
 
@@ -68,9 +78,12 @@ function stateBadge(state: string) {
 }
 
 export function AccountsTab() {
+  const { user } = useAuth();
+
   const [clients, setClients] = useState<Client[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [revenueRows, setRevenueRows] = useState<RevenueRow[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState<{ client: Client; monthKey: string } | null>(null);
   const [payMethod, setPayMethod] = useState<string>('EcoCash');
@@ -81,13 +94,15 @@ export function AccountsTab() {
 
 
   const load = async () => {
-    const [{ data: billing }, { data: profiles }, { data: pays }, { data: sums }] = await Promise.all([
+    const [{ data: billing }, { data: profiles }, { data: pays }, { data: sums }, { data: revs }] = await Promise.all([
       (supabase.from('customer_billing' as any) as any)
         .select('user_id, account_id, monthly_fee, balance, billing_day, account_state, last_paid_date, created_at'),
       supabase.from('profiles').select('user_id, full_name, phone'),
       (supabase.from('payment_history' as any) as any).select('id, user_id, date, amount, method, status'),
       (supabase.from('business_summary' as any) as any).select('month, expenses, investments'),
+      (supabase.from('monthly_revenue' as any) as any).select('id, month, amount, logged_by'),
     ]);
+
     const pmap = new Map((profiles ?? []).map((p) => [p.user_id, p]));
     const merged: Client[] = (billing ?? []).map((b: any) => {
       const j = new Date(b.created_at);
@@ -114,6 +129,7 @@ export function AccountsTab() {
     setClients(merged);
     setPayments((pays ?? []) as Payment[]);
     setSummaries((sums ?? []) as Summary[]);
+    setRevenueRows((revs ?? []) as RevenueRow[]);
   };
 
   useEffect(() => {
@@ -123,9 +139,11 @@ export function AccountsTab() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_billing' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'business_summary' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_revenue' }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
 
   const now = useMemo(() => new Date(), []);
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -154,17 +172,22 @@ export function AccountsTab() {
   }, [payments]);
 
   const summaryMap = useMemo(() => new Map(summaries.map((s) => [s.month, s])), [summaries]);
+  const revenueMap = useMemo(
+    () => new Map(revenueRows.map((r) => [r.month, r])),
+    [revenueRows],
+  );
 
-  const revenueFor = (monthKey: string) => {
-    let sum = 0;
+  const paymentCountByMonth = useMemo(() => {
+    const idx = new Map<string, number>();
     for (const p of payments) {
       if ((p.status || '').toUpperCase() !== 'PAID') continue;
       const d = new Date(p.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      if (key === monthKey) sum += Number(p.amount ?? 0);
+      idx.set(key, (idx.get(key) ?? 0) + 1);
     }
-    return sum;
-  };
+    return idx;
+  }, [payments]);
+
 
   const toggleExpand = (uid: string) => {
     setExpanded((prev) => {
@@ -265,6 +288,28 @@ export function AccountsTab() {
     if (error) hexToast.error('Failed to save');
     else load();
   };
+
+  const saveRevenue = async (monthKey: string, raw: string) => {
+    const val = parseFloat(raw);
+    if (Number.isNaN(val) || val < 0) return;
+    const existing = revenueMap.get(monthKey);
+    if (existing && Math.abs(Number(existing.amount) - val) < 0.005) return;
+    const nowIso = new Date().toISOString();
+    const loggedBy = user?.email ?? 'manual';
+    if (existing) {
+      const { error } = await (supabase.from('monthly_revenue' as any) as any)
+        .update({ amount: val, logged_by: loggedBy, updated_at: nowIso })
+        .eq('id', existing.id);
+      if (error) { hexToast.error('Failed to save revenue'); return; }
+    } else {
+      const { error } = await (supabase.from('monthly_revenue' as any) as any)
+        .insert({ month: monthKey, amount: val, logged_by: loggedBy, updated_at: nowIso });
+      if (error) { hexToast.error('Failed to save revenue'); return; }
+    }
+    hexToast.success(`Revenue for ${labelFor(monthKey).full} updated`);
+    load();
+  };
+
 
   const filteredClients = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -491,12 +536,21 @@ export function AccountsTab() {
             <tbody>
               <tr className="border-t border-border/40 bg-green-500/5">
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-green-400">REVENUE</td>
-                {monthKeys.map((mk) => (
-                  <td key={mk} className="px-3 py-2 text-center font-mono text-green-400">
-                    ${revenueFor(mk).toFixed(2)}
-                  </td>
-                ))}
+                {monthKeys.map((mk) => {
+                  const rev = revenueMap.get(mk);
+                  const count = paymentCountByMonth.get(mk) ?? 0;
+                  return (
+                    <td key={mk} className="px-1 py-1">
+                      <RevenueCell
+                        row={rev}
+                        paymentCount={count}
+                        onSave={(v) => saveRevenue(mk, v)}
+                      />
+                    </td>
+                  );
+                })}
               </tr>
+
               <tr className="border-t border-border/40 bg-red-500/5">
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-red-400">EXPENSES</td>
                 {monthKeys.map((mk) => (
@@ -623,6 +677,50 @@ function Row({ k, v }: { k: string; v: string }) {
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{k}</span>
       <span className="text-foreground">{v}</span>
+    </div>
+  );
+}
+
+function RevenueCell({
+  row,
+  paymentCount,
+  onSave,
+}: {
+  row?: { amount: number; logged_by: string | null };
+  paymentCount: number;
+  onSave: (v: string) => void;
+}) {
+  const amount = Number(row?.amount ?? 0);
+  const isManual = !!row && row.logged_by !== null && row.logged_by !== 'auto';
+  const [val, setVal] = useState<string>(amount ? String(amount) : '');
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setVal(amount ? String(amount) : ''); }, [amount, focused]);
+
+  const tooltip = isManual
+    ? `Manually set by ${row?.logged_by}. Click to edit.`
+    : `Auto-calculated from ${paymentCount} payment${paymentCount === 1 ? '' : 's'}. Click to edit.`;
+
+  return (
+    <div className="flex flex-col items-center gap-0.5" title={tooltip}>
+      <Input
+        value={val}
+        onFocus={() => setFocused(true)}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={() => {
+          setFocused(false);
+          const next = val === '' ? 0 : parseFloat(val);
+          if (!Number.isNaN(next) && Math.abs(next - amount) > 0.005) {
+            onSave(val === '' ? '0' : val);
+          }
+        }}
+        placeholder="0"
+        className={`h-8 w-24 mx-auto text-center font-mono text-xs ${
+          isManual ? 'text-amber-400 border-amber-400/40' : 'text-primary border-primary/30'
+        }`}
+      />
+      {isManual && (
+        <span className="text-[8px] font-mono uppercase tracking-[0.2em] text-amber-400/80">Edited</span>
+      )}
     </div>
   );
 }

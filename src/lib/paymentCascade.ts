@@ -113,7 +113,38 @@ export async function applyMonthlyPayment(opts: {
   await (supabase.from('customer_billing' as any) as any)
     .update(patch)
     .eq('user_id', client.user_id);
+
+  // 6. Auto-accumulate monthly_revenue for the payment's month.
+  //    - If a row exists (auto OR manual override), ADD the monthly_fee to it.
+  //    - If no row exists, insert with logged_by='auto'.
+  //    Manual overrides preserve their `logged_by` label so the UI can badge them.
+  try {
+    const { data: existingRev } = await (supabase.from('monthly_revenue' as any) as any)
+      .select('id, amount, logged_by')
+      .eq('month', monthKey)
+      .limit(1);
+    const rev = existingRev?.[0];
+    const nowIso = new Date().toISOString();
+    if (rev) {
+      await (supabase.from('monthly_revenue' as any) as any)
+        .update({
+          amount: Number(rev.amount ?? 0) + Number(client.monthly_fee ?? 0),
+          updated_at: nowIso,
+        })
+        .eq('id', rev.id);
+    } else {
+      await (supabase.from('monthly_revenue' as any) as any).insert({
+        month: monthKey,
+        amount: Number(client.monthly_fee ?? 0),
+        logged_by: 'auto',
+        updated_at: nowIso,
+      });
+    }
+  } catch {
+    // Non-fatal — revenue aggregation shouldn't block the payment itself.
+  }
 }
+
 
 /**
  * Auto-generate an UNPAID invoice for the current month once the billing day
