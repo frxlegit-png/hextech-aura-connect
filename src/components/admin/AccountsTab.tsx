@@ -680,3 +680,47 @@ function Row({ k, v }: { k: string; v: string }) {
     </div>
   );
 }
+
+function RevenueCell({
+  row,
+  paymentCount,
+  onSave,
+}: {
+  row?: { amount: number; logged_by: string | null };
+  paymentCount: number;
+  onSave: (v: string) => void;
+}) {
+  const amount = Number(row?.amount ?? 0);
+  const isManual = !!row && row.logged_by !== null && row.logged_by !== 'auto';
+  const [val, setVal] = useState<string>(amount ? String(amount) : '');
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setVal(amount ? String(amount) : ''); }, [amount, focused]);
+
+  const tooltip = isManual
+    ? `Manually set by ${row?.logged_by}. Click to edit.`
+    : `Auto-calculated from ${paymentCount} payment${paymentCount === 1 ? '' : 's'}. Click to edit.`;
+
+  return (
+    <div className="flex flex-col items-center gap-0.5" title={tooltip}>
+      <Input
+        value={val}
+        onFocus={() => setFocused(true)}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={() => {
+          setFocused(false);
+          const next = val === '' ? 0 : parseFloat(val);
+          if (!Number.isNaN(next) && Math.abs(next - amount) > 0.005) {
+            onSave(val === '' ? '0' : val);
+          }
+        }}
+        placeholder="0"
+        className={`h-8 w-24 mx-auto text-center font-mono text-xs ${
+          isManual ? 'text-amber-400 border-amber-400/40' : 'text-primary border-primary/30'
+        }`}
+      />
+      {isManual && (
+        <span className="text-[8px] font-mono uppercase tracking-[0.2em] text-amber-400/80">Edited</span>
+      )}
+    </div>
+  );
+}
