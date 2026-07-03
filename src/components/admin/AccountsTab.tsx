@@ -78,6 +78,8 @@ function stateBadge(state: string) {
 }
 
 export function AccountsTab() {
+  const { user } = useAuth();
+
   const [clients, setClients] = useState<Client[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [summaries, setSummaries] = useState<Summary[]>([]);
