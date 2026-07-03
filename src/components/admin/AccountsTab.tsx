@@ -536,12 +536,21 @@ export function AccountsTab() {
             <tbody>
               <tr className="border-t border-border/40 bg-green-500/5">
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-green-400">REVENUE</td>
-                {monthKeys.map((mk) => (
-                  <td key={mk} className="px-3 py-2 text-center font-mono text-green-400">
-                    ${revenueFor(mk).toFixed(2)}
-                  </td>
-                ))}
+                {monthKeys.map((mk) => {
+                  const rev = revenueMap.get(mk);
+                  const count = paymentCountByMonth.get(mk) ?? 0;
+                  return (
+                    <td key={mk} className="px-1 py-1">
+                      <RevenueCell
+                        row={rev}
+                        paymentCount={count}
+                        onSave={(v) => saveRevenue(mk, v)}
+                      />
+                    </td>
+                  );
+                })}
               </tr>
+
               <tr className="border-t border-border/40 bg-red-500/5">
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-red-400">EXPENSES</td>
                 {monthKeys.map((mk) => (
