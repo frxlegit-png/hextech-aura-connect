@@ -125,6 +125,7 @@ export function AccountsTab() {
     setClients(merged);
     setPayments((pays ?? []) as Payment[]);
     setSummaries((sums ?? []) as Summary[]);
+    setRevenueRows((revs ?? []) as RevenueRow[]);
   };
 
   useEffect(() => {
@@ -134,9 +135,11 @@ export function AccountsTab() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_billing' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'business_summary' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_revenue' }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
 
   const now = useMemo(() => new Date(), []);
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
