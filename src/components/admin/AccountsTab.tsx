@@ -100,7 +100,13 @@ export function AccountsTab() {
         joined: `${j.getFullYear()}-${String(j.getMonth() + 1).padStart(2, '0')}`,
       };
     });
-    merged.sort((a, b) => (a.full_name ?? '').localeCompare(b.full_name ?? ''));
+    merged.sort((a, b) => {
+      // Sort by billing_day ascending; NULLs last.
+      const ad = a.billing_day ?? Number.POSITIVE_INFINITY;
+      const bd = b.billing_day ?? Number.POSITIVE_INFINITY;
+      if (ad !== bd) return ad - bd;
+      return (a.full_name ?? '').localeCompare(b.full_name ?? '');
+    });
     setClients(merged);
     setPayments((pays ?? []) as Payment[]);
     setSummaries((sums ?? []) as Summary[]);
