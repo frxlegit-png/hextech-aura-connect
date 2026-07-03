@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
 import { ChevronDown, ChevronRight, Check } from 'lucide-react';
-import { effectiveState, formatDateKey } from '@/lib/billing';
+import { effectiveState } from '@/lib/billing';
+import { applyMonthlyPayment } from '@/lib/paymentCascade';
 
 interface Client {
   user_id: string;
