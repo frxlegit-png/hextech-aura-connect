@@ -162,6 +162,11 @@ export function AccountsTab() {
     return buildMonthKeys(earliest, now);
   }, [clients, now]);
 
+  // Section 2 (Business Summary): show the latest month first, with previous
+  // months receding to the right so the most recent dates are visible on load
+  // without horizontal scrolling.
+  const displayMonths = useMemo(() => [...monthKeys].reverse(), [monthKeys]);
+
   // { user_id: Set<monthKey> } for paid months
   const paidIndex = useMemo(() => {
     const idx = new Map<string, Set<string>>();
@@ -605,7 +610,7 @@ export function AccountsTab() {
             <thead className="bg-muted/40">
               <tr>
                 <th className="sticky left-0 z-10 bg-muted/40 text-left px-3 py-2 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground">Row</th>
-                {monthKeys.map((mk) => {
+                {displayMonths.map((mk) => {
                   const l = labelFor(mk);
                   return (
                     <th key={mk} className="text-center px-3 py-2 text-[10px] font-mono uppercase tracking-[0.15em] text-muted-foreground min-w-[90px]">
@@ -618,7 +623,7 @@ export function AccountsTab() {
             <tbody>
               <tr className="border-t border-border/40 bg-green-500/5">
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-green-400">REVENUE</td>
-                {monthKeys.map((mk) => {
+                {displayMonths.map((mk) => {
                   const rev = revenueMap.get(mk);
                   const stats = paymentStatsByMonth.get(mk) ?? { count: 0, sum: 0 };
                   return (
@@ -637,7 +642,7 @@ export function AccountsTab() {
 
               <tr className="border-t border-border/40 bg-red-500/5">
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-red-400">EXPENSES</td>
-                {monthKeys.map((mk) => (
+                {displayMonths.map((mk) => (
                   <td key={mk} className="px-1 py-1">
                     <SummaryInput
                       initial={Number(summaryMap.get(mk)?.expenses ?? 0)}
@@ -648,7 +653,7 @@ export function AccountsTab() {
               </tr>
               <tr className="border-t border-border/40 bg-primary/5">
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-primary">INVESTMENTS</td>
-                {monthKeys.map((mk) => (
+                {displayMonths.map((mk) => (
                   <td key={mk} className="px-1 py-1">
                     <SummaryInput
                       initial={Number(summaryMap.get(mk)?.investments ?? 0)}
