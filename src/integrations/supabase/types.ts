@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_summary: {
+        Row: {
+          created_at: string
+          expenses: number
+          id: string
+          investments: number
+          month: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expenses?: number
+          id?: string
+          investments?: number
+          month: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expenses?: number
+          id?: string
+          investments?: number
+          month?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coverage_areas: {
         Row: {
           created_at: string
