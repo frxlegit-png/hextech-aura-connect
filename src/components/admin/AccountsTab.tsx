@@ -252,14 +252,24 @@ export function AccountsTab() {
               </tr>
             </thead>
             <tbody>
-              {clients.map((c) => {
+              {clients.map((c, idx) => {
                 const isOpen = expanded.has(c.user_id);
                 const eff = effectiveState(c.billing_day, c.last_paid_date, c.account_state);
                 const paidSet = paidIndex.get(c.user_id) ?? new Set<string>();
                 const currentPaid = paidSet.has(currentMonthKey);
                 const clientMonths = monthKeys.filter((k) => k >= c.joined);
+                const prevDay = idx > 0 ? clients[idx - 1].billing_day : null;
+                const showDivider = idx === 0 || c.billing_day !== prevDay;
+                const dividerLabel = c.billing_day ? `— DAY ${c.billing_day} —` : '— NO BILLING DAY —';
                 return (
                   <Fragment key={c.user_id}>
+                    {showDivider && (
+                      <tr className="bg-muted/20">
+                        <td colSpan={8} className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground/70">
+                          {dividerLabel}
+                        </td>
+                      </tr>
+                    )}
                     <tr className="border-t border-border/40 hover:bg-muted/20">
                       <td className="px-3 py-3">
                         <button
