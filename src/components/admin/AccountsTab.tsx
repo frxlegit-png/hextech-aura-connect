@@ -75,6 +75,10 @@ export function AccountsTab() {
   const [target, setTarget] = useState<{ client: Client; monthKey: string } | null>(null);
   const [payMethod, setPayMethod] = useState<string>('EcoCash');
   const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [stateFilter, setStateFilter] = useState<'all' | 'active' | 'expiring' | 'expired' | 'suspended' | 'pending'>('all');
+
 
   const load = async () => {
     const [{ data: billing }, { data: profiles }, { data: pays }, { data: sums }] = await Promise.all([
