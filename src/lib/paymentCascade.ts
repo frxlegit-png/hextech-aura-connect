@@ -114,34 +114,54 @@ export async function applyMonthlyPayment(opts: {
     .update(patch)
     .eq('user_id', client.user_id);
 
-  // 6. Auto-accumulate monthly_revenue for the payment's month.
-  //    - If a row exists (auto OR manual override), ADD the monthly_fee to it.
-  //    - If no row exists, insert with logged_by='auto'.
-  //    Manual overrides preserve their `logged_by` label so the UI can badge them.
+  // 6. Recompute monthly_revenue for this month from live payment_history.
+  //    Self-healing: any bill change (paid, reversed, retroactive fix) always
+  //    reconciles Section 2, dashboard, and Revenue tab to the true PAID sum.
+  //    Manual overrides (logged_by != 'auto') are preserved and NOT overwritten.
   try {
-    const { data: existingRev } = await (supabase.from('monthly_revenue' as any) as any)
-      .select('id, amount, logged_by')
-      .eq('month', monthKey)
-      .limit(1);
-    const rev = existingRev?.[0];
-    const nowIso = new Date().toISOString();
-    if (rev) {
-      await (supabase.from('monthly_revenue' as any) as any)
-        .update({
-          amount: Number(rev.amount ?? 0) + Number(client.monthly_fee ?? 0),
-          updated_at: nowIso,
-        })
-        .eq('id', rev.id);
-    } else {
-      await (supabase.from('monthly_revenue' as any) as any).insert({
-        month: monthKey,
-        amount: Number(client.monthly_fee ?? 0),
-        logged_by: 'auto',
-        updated_at: nowIso,
-      });
-    }
+    await recomputeMonthlyRevenue(monthKey);
   } catch {
     // Non-fatal — revenue aggregation shouldn't block the payment itself.
+  }
+}
+
+/**
+ * Recompute a month's row in `monthly_revenue` from the live PAID sum in
+ * `payment_history`. Skips manual overrides (logged_by != 'auto'). Idempotent.
+ */
+export async function recomputeMonthlyRevenue(monthKey: string): Promise<void> {
+  const [y, m] = monthKey.split('-').map(Number);
+  const startStr = `${monthKey}-01`;
+  const endStr = formatDateKey(new Date(y, m, 1));
+
+  const { data: pays } = await (supabase.from('payment_history' as any) as any)
+    .select('amount, status')
+    .gte('date', startStr)
+    .lt('date', endStr);
+  const sum = ((pays as any[]) ?? [])
+    .filter((p) => (p.status || '').toUpperCase() === 'PAID')
+    .reduce((s, p) => s + Number(p.amount ?? 0), 0);
+
+  const { data: existingRev } = await (supabase.from('monthly_revenue' as any) as any)
+    .select('id, logged_by')
+    .eq('month', monthKey)
+    .limit(1);
+  const rev = existingRev?.[0];
+  const nowIso = new Date().toISOString();
+
+  if (rev) {
+    // Preserve manual overrides — do not overwrite user-entered amounts.
+    if ((rev.logged_by ?? 'auto') !== 'auto') return;
+    await (supabase.from('monthly_revenue' as any) as any)
+      .update({ amount: sum, updated_at: nowIso })
+      .eq('id', rev.id);
+  } else {
+    await (supabase.from('monthly_revenue' as any) as any).insert({
+      month: monthKey,
+      amount: sum,
+      logged_by: 'auto',
+      updated_at: nowIso,
+    });
   }
 }
 
