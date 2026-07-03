@@ -184,40 +184,21 @@ export function AccountsTab() {
     }
     setConfirming(true);
     try {
-      const [y, m] = monthKey.split('-').map(Number);
-      const day = Math.min(client.billing_day, 28);
-      const paidDate = new Date(y, m - 1, day);
-      const paidStr = formatDateKey(paidDate);
-
-      // 1. Insert payment_history record
-      const { error: payErr } = await (supabase.from('payment_history' as any) as any).insert({
-        user_id: client.user_id,
-        date: paidStr,
-        description: `Monthly Subscription — ${labelFor(monthKey).full}`,
+      await applyMonthlyPayment({
+        client: {
+          user_id: client.user_id,
+          full_name: client.full_name,
+          email: null,
+          phone: client.phone,
+          monthly_fee: client.monthly_fee,
+          balance: client.balance,
+          billing_day: client.billing_day,
+          account_state: client.account_state,
+          last_paid_date: client.last_paid_date,
+        },
+        monthKey,
         method: payMethod,
-        amount: client.monthly_fee,
-        status: 'PAID',
       });
-      if (payErr) throw payErr;
-
-      // 2. Reduce outstanding balance by monthly fee
-      const newBalance = Math.max(0, Number(client.balance) - Number(client.monthly_fee));
-
-      // 3. Advance last_paid_date only if this payment is more recent
-      const patch: Record<string, unknown> = { balance: newBalance };
-      const currentAnchor = client.last_paid_date ? new Date(client.last_paid_date) : null;
-      if (!currentAnchor || paidDate > currentAnchor) {
-        patch.last_paid_date = paidStr;
-      }
-      // 4. Set state to active only when balance clears
-      if (newBalance <= 0.005 && client.account_state !== 'suspended' && client.account_state !== 'pending') {
-        patch.account_state = 'active';
-      }
-
-      const { error: updErr } = await (supabase.from('customer_billing' as any) as any)
-        .update(patch).eq('user_id', client.user_id);
-      if (updErr) throw updErr;
-
       hexToast.success(`Payment confirmed for ${client.full_name ?? 'client'} — ${labelFor(monthKey).full}`);
       setTarget(null);
       load();
