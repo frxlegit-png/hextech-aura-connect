@@ -289,6 +289,28 @@ export function AccountsTab() {
     else load();
   };
 
+  const saveRevenue = async (monthKey: string, raw: string) => {
+    const val = parseFloat(raw);
+    if (Number.isNaN(val) || val < 0) return;
+    const existing = revenueMap.get(monthKey);
+    if (existing && Math.abs(Number(existing.amount) - val) < 0.005) return;
+    const nowIso = new Date().toISOString();
+    const loggedBy = user?.email ?? 'manual';
+    if (existing) {
+      const { error } = await (supabase.from('monthly_revenue' as any) as any)
+        .update({ amount: val, logged_by: loggedBy, updated_at: nowIso })
+        .eq('id', existing.id);
+      if (error) { hexToast.error('Failed to save revenue'); return; }
+    } else {
+      const { error } = await (supabase.from('monthly_revenue' as any) as any)
+        .insert({ month: monthKey, amount: val, logged_by: loggedBy, updated_at: nowIso });
+      if (error) { hexToast.error('Failed to save revenue'); return; }
+    }
+    hexToast.success(`Revenue for ${labelFor(monthKey).full} updated`);
+    load();
+  };
+
+
   const filteredClients = useMemo(() => {
     const q = search.trim().toLowerCase();
     return clients.filter((c) => {
