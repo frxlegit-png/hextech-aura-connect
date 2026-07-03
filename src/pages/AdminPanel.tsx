@@ -8,13 +8,14 @@ import { HexCard } from '@/components/hex/HexCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp, Receipt } from 'lucide-react';
+import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp, Receipt, Wallet2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CustomerManager } from '@/components/admin/CustomerManager';
 import { PaymentSettingsManager } from '@/components/admin/PaymentSettingsManager';
 import { RevenueManager } from '@/components/admin/RevenueManager';
 import { BillingTab } from '@/components/admin/BillingTab';
 import { InvoicesTab } from '@/components/admin/InvoicesTab';
+import { AccountsTab } from '@/components/admin/AccountsTab';
 import { useAdminStats } from '@/hooks/useAdminStats';
 
 interface TicketRow {
@@ -179,8 +180,9 @@ const AdminPanel = () => {
           </div>
 
           <Tabs defaultValue="customers" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-6 mb-6">
               <TabsTrigger value="customers"><Users className="w-4 h-4 mr-2" />Customers</TabsTrigger>
+              <TabsTrigger value="accounts"><Wallet2 className="w-4 h-4 mr-2" />Accounts</TabsTrigger>
               <TabsTrigger value="billing"><Receipt className="w-4 h-4 mr-2" />Billing</TabsTrigger>
               <TabsTrigger value="invoices"><FileText className="w-4 h-4 mr-2" />Invoices</TabsTrigger>
               <TabsTrigger value="tickets"><LifeBuoy className="w-4 h-4 mr-2" />Support</TabsTrigger>
@@ -191,6 +193,10 @@ const AdminPanel = () => {
               <CustomerManager />
             </TabsContent>
 
+            <TabsContent value="accounts">
+              <AccountsTab />
+            </TabsContent>
+
             <TabsContent value="billing">
               <BillingTab />
             </TabsContent>
@@ -198,6 +204,7 @@ const AdminPanel = () => {
             <TabsContent value="invoices">
               <InvoicesTab />
             </TabsContent>
+
 
 
             <TabsContent value="tickets">
