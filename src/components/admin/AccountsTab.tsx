@@ -177,16 +177,47 @@ export function AccountsTab() {
   const openConfirm = (client: Client, monthKey: string) => {
     setTarget({ client, monthKey });
     setPayMethod('EcoCash');
+    setConfirmError(null);
   };
 
   const confirmPayment = async () => {
     if (!target) return;
     const { client, monthKey } = target;
     if (!client.billing_day) {
+      setConfirmError('Set a billing day on this account first.');
       hexToast.error('Set a billing day on this account first.');
       return;
     }
     setConfirming(true);
+    setConfirmError(null);
+
+    // Optimistic: inject a fake PAID row into local state so the check appears immediately.
+    const optimisticId = `optimistic-${crypto.randomUUID?.() ?? Date.now()}`;
+    const [y, m] = monthKey.split('-').map(Number);
+    const day = Math.min(client.billing_day, 28);
+    const optimisticDate = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const optimisticPayment: Payment = {
+      id: optimisticId,
+      user_id: client.user_id,
+      date: optimisticDate,
+      amount: client.monthly_fee,
+      method: payMethod,
+      status: 'PAID',
+    };
+    setPayments((prev) => [...prev, optimisticPayment]);
+    const prevClients = clients;
+    setClients((prev) =>
+      prev.map((c) =>
+        c.user_id === client.user_id
+          ? { ...c, balance: Math.max(0, Number(c.balance ?? 0) - Number(c.monthly_fee ?? 0)) }
+          : c,
+      ),
+    );
+    const label = labelFor(monthKey).full;
+    const closingTarget = target;
+    setTarget(null);
+    hexToast.success(`Payment recorded — ${client.full_name ?? 'client'} · ${label}`);
+
     try {
       await applyMonthlyPayment({
         client: {
@@ -203,15 +234,21 @@ export function AccountsTab() {
         monthKey,
         method: payMethod,
       });
-      hexToast.success(`Payment confirmed for ${client.full_name ?? 'client'} — ${labelFor(monthKey).full}`);
-      setTarget(null);
       load();
     } catch (e: any) {
-      hexToast.error(e?.message ?? 'Failed to confirm payment');
+      // Rollback optimistic changes.
+      setPayments((prev) => prev.filter((p) => p.id !== optimisticId));
+      setClients(prevClients);
+      setTarget(closingTarget);
+      const msg = e?.message ?? 'Failed to confirm payment';
+      setConfirmError(msg);
+      hexToast.error(msg);
     } finally {
       setConfirming(false);
     }
   };
+
+
 
   const saveSummary = async (monthKey: string, field: 'expenses' | 'investments', raw: string) => {
     const val = parseFloat(raw);
