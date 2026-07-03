@@ -10,7 +10,7 @@ import {
 import { hexToast } from '@/components/hex/HexToast';
 import { ChevronDown, ChevronRight, Check, Search, Loader2, AlertCircle, X } from 'lucide-react';
 import { effectiveState } from '@/lib/billing';
-import { applyMonthlyPayment } from '@/lib/paymentCascade';
+import { applyMonthlyPayment, reverseMonthlyPayment } from '@/lib/paymentCascade';
 import { useAuth } from '@/hooks/useAuth';
 
 
