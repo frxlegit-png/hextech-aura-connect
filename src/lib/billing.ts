@@ -151,10 +151,17 @@ export function formatDate(d: Date | null) {
 import { supabase } from '@/integrations/supabase/client';
 
 /**
- * When the LIVE effective state is `expired` and the stored balance does not
- * already equal the monthly fee, set balance = monthly_fee on the customer's
- * billing row. Does NOT write account_state — state is computed live.
- * Skips manual states (suspended/pending).
+ * When the LIVE effective state is `expired`, persist the correct state and
+ * balance on the customer's billing row so admin views (billing tab, customer
+ * profile, reports) reflect reality even before the client logs in.
+ *
+ *  - Writes `account_state = 'expired'` when live state is expired and stored
+ *    state is anything other than `suspended` / `pending` / `expired`.
+ *  - Writes `balance = monthly_fee` when live state is expired and the stored
+ *    balance doesn't already match the monthly fee.
+ *  - Skips manual overrides (suspended / pending) entirely.
+ *
+ * Returns true when any DB update was written.
  */
 export async function syncExpiredBalance(row: {
   user_id: string;
@@ -167,12 +174,21 @@ export async function syncExpiredBalance(row: {
   if (isManual(row.account_state)) return false;
   const auto = autoStateFromDay(row.billing_day, row.last_paid_date);
   if (auto !== 'expired') return false;
+
   const fee = Number(row.monthly_fee ?? 0);
-  if (!fee) return false;
   const current = Number(row.balance ?? 0);
-  if (Math.abs(current - fee) < 0.005) return false;
+  const patch: Record<string, unknown> = {};
+
+  if ((row.account_state ?? '').toLowerCase() !== 'expired') {
+    patch.account_state = 'expired';
+  }
+  if (fee > 0 && Math.abs(current - fee) >= 0.005) {
+    patch.balance = fee;
+  }
+  if (Object.keys(patch).length === 0) return false;
+
   const { error } = await (supabase.from('customer_billing' as any) as any)
-    .update({ balance: fee })
+    .update(patch)
     .eq('user_id', row.user_id);
   return !error;
 }
