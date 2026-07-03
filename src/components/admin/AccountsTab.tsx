@@ -559,14 +559,25 @@ export function AccountsTab() {
                   {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
+              {confirmError && (
+                <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-[1px]" />
+                  <span>{confirmError}</span>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setTarget(null)} disabled={confirming}>Cancel</Button>
             <Button onClick={confirmPayment} disabled={confirming}>
-              {confirming ? 'Confirming…' : 'Confirm'}
+              {confirming ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Confirming…</>
+              ) : (
+                'Confirm'
+              )}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>
