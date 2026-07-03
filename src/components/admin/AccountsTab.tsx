@@ -840,7 +840,7 @@ function RevenueCell({
     : `Auto-calculated from ${paymentCount} payment${paymentCount === 1 ? '' : 's'}. Click to edit.`;
 
   return (
-    <div className="flex flex-col items-center gap-0.5" title={tooltip}>
+    <div className="flex items-center justify-center" title={tooltip}>
       <Input
         value={val}
         onFocus={() => setFocused(true)}
@@ -853,14 +853,10 @@ function RevenueCell({
           }
         }}
         placeholder="0"
-        className={`h-8 w-24 mx-auto text-center font-mono text-xs ${
-          isManual ? 'text-amber-400 border-amber-400/40' : 'text-primary border-primary/30'
-        }`}
+        className="h-8 w-24 mx-auto text-center font-mono text-xs text-green-400 border-border/50"
       />
-      {isManual && (
-        <span className="text-[8px] font-mono uppercase tracking-[0.2em] text-amber-400/80">Edited</span>
-      )}
     </div>
   );
+
 
 }
