@@ -86,9 +86,13 @@ export function AccountsTab() {
   const [revenueRows, setRevenueRows] = useState<RevenueRow[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState<{ client: Client; monthKey: string } | null>(null);
+  const [reverseTarget, setReverseTarget] = useState<{ client: Client; monthKey: string } | null>(null);
   const [payMethod, setPayMethod] = useState<string>('EcoCash');
   const [confirming, setConfirming] = useState(false);
+  const [reversing, setReversing] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [reverseError, setReverseError] = useState<string | null>(null);
+
   const [search, setSearch] = useState('');
   const [stateFilter, setStateFilter] = useState<'all' | 'active' | 'expiring' | 'expired' | 'suspended' | 'pending'>('all');
 
