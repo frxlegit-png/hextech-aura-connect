@@ -40,9 +40,10 @@ export function useAdminStats(): AdminStats {
     const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const prevMonth = ym(prevDate);
 
-    const [billingRes, revenueRes, ticketsRes, newProfRes] = await Promise.all([
+    const [billingRes, revenueRes, paymentsRes, ticketsRes, newProfRes] = await Promise.all([
       supabase.from('customer_billing').select('billing_day, account_state, last_paid_date'),
-      supabase.from('monthly_revenue').select('month, amount'),
+      supabase.from('monthly_revenue').select('month, amount, logged_by'),
+      (supabase.from('payment_history' as any) as any).select('date, amount, status'),
       supabase.from('tickets').select('status'),
       supabase.from('profiles').select('user_id, created_at').gte('created_at', startMonth),
     ]);
@@ -54,15 +55,36 @@ export function useAdminStats(): AdminStats {
       if (eff === 'active' || eff === 'expiring' || eff === 'pending') active++;
     }
 
-    const revenue = (revenueRes.data ?? []) as { month: string; amount: number | string }[];
-    const total = revenue.reduce((s, r) => s + Number(r.amount), 0);
-    const current = revenue.find((r) => r.month === thisMonth);
-    const prev = revenue.find((r) => r.month === prevMonth);
-    const monthly = current ? Number(current.amount) : 0;
-    let pct: number | null = null;
-    if (current && prev && Number(prev.amount) > 0) {
-      pct = ((Number(current.amount) - Number(prev.amount)) / Number(prev.amount)) * 100;
+    // Build per-month revenue from payment_history, then apply manual overrides
+    // from monthly_revenue (rows where logged_by !== 'auto'). Same logic as
+    // Accounts tab REVENUE row so the dashboard and Section 2 always agree.
+    const revenue = (revenueRes.data ?? []) as {
+      month: string;
+      amount: number | string;
+      logged_by: string | null;
+    }[];
+    const payments = (paymentsRes.data ?? []) as { date: string; amount: number | string; status: string }[];
+
+    const perMonth = new Map<string, number>();
+    for (const p of payments) {
+      if ((p.status || '').toUpperCase() !== 'PAID') continue;
+      const d = new Date(p.date);
+      const key = ym(d);
+      perMonth.set(key, (perMonth.get(key) ?? 0) + Number(p.amount ?? 0));
     }
+    for (const r of revenue) {
+      if (r.logged_by !== null && r.logged_by !== 'auto') {
+        perMonth.set(r.month, Number(r.amount ?? 0));
+      }
+    }
+
+    const total = Array.from(perMonth.values()).reduce((s, v) => s + v, 0);
+    const monthly = perMonth.get(thisMonth) ?? 0;
+    const prevVal = perMonth.get(prevMonth) ?? 0;
+    const hasCurrent = perMonth.has(thisMonth);
+    const hasPrev = perMonth.has(prevMonth);
+    const pct: number | null =
+      hasCurrent && hasPrev && prevVal > 0 ? ((monthly - prevVal) / prevVal) * 100 : null;
 
     const tickets = (ticketsRes.data ?? []) as { status: string }[];
     const open = tickets.filter((t) => {
@@ -75,9 +97,9 @@ export function useAdminStats(): AdminStats {
       activeSubscribers: active,
       newThisMonth: (newProfRes.data ?? []).length,
       monthlyRevenue: monthly,
-      monthlyRevenueLogged: !!current,
+      monthlyRevenueLogged: hasCurrent,
       monthlyRevenuePctChange: pct,
-      hasPrevMonth: !!prev,
+      hasPrevMonth: hasPrev,
       totalRevenue: total,
       openTickets: open,
       pendingTickets: pending,
@@ -90,6 +112,7 @@ export function useAdminStats(): AdminStats {
       .channel('admin_stats')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_billing' }, recompute)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'monthly_revenue' }, recompute)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, recompute)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, recompute)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, recompute)
       .subscribe();
