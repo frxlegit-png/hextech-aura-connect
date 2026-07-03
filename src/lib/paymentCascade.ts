@@ -242,3 +242,91 @@ export function monthsOverdue(
   }
   return count;
 }
+
+/**
+ * Reverse a paid month for a customer. Undoes what `applyMonthlyPayment` did:
+ *  - deletes matching payment_history entries for that month
+ *  - flips the invoice back to UNPAID (clears paid_date)
+ *  - adds monthly_fee back to the outstanding balance
+ *  - subtracts monthly_fee from monthly_revenue (floored at 0)
+ *  - recomputes last_paid_date from the newest remaining PAID payment
+ *  - recomputes account_state
+ */
+export async function reverseMonthlyPayment(opts: {
+  client: CascadeClient;
+  monthKey: string;
+}): Promise<void> {
+  const { client, monthKey } = opts;
+  const [y, m] = monthKey.split('-').map(Number);
+  const monthStart = `${monthKey}-01`;
+  const nextMonth = new Date(y, m, 1);
+  const nextStart = formatDateKey(nextMonth);
+
+  // 1. Delete payment_history rows for this user in this month.
+  await (supabase.from('payment_history' as any) as any)
+    .delete()
+    .eq('user_id', client.user_id)
+    .eq('status', 'PAID')
+    .gte('date', monthStart)
+    .lt('date', nextStart);
+
+  // 2. Flip invoice back to UNPAID (keep the row so it stays on the ledger).
+  const { data: invList } = await (supabase.from('invoices' as any) as any)
+    .select('id')
+    .eq('user_id', client.user_id)
+    .eq('month_key', monthKey)
+    .limit(1);
+  const inv = invList?.[0];
+  if (inv) {
+    await (supabase.from('invoices' as any) as any)
+      .update({ status: 'UNPAID', paid_date: null })
+      .eq('id', inv.id);
+  }
+
+  // 3. Add balance back.
+  const newBalance = Number(client.balance ?? 0) + Number(client.monthly_fee ?? 0);
+
+  // 4. Recompute last_paid_date from remaining PAID payments.
+  const { data: remaining } = await (supabase.from('payment_history' as any) as any)
+    .select('date')
+    .eq('user_id', client.user_id)
+    .eq('status', 'PAID')
+    .order('date', { ascending: false })
+    .limit(1);
+  const newAnchor: string | null = remaining?.[0]?.date ?? null;
+
+  const patch: Record<string, unknown> = {
+    balance: newBalance,
+    last_paid_date: newAnchor,
+  };
+
+  // 5. Recompute account_state.
+  if (!isManual(client.account_state)) {
+    if (newBalance > 0.005) {
+      patch.account_state = 'expired';
+    } else {
+      patch.account_state = autoStateFromDay(client.billing_day, newAnchor);
+    }
+  }
+
+  await (supabase.from('customer_billing' as any) as any)
+    .update(patch)
+    .eq('user_id', client.user_id);
+
+  // 6. Subtract from monthly_revenue (floor at 0). Preserve logged_by.
+  try {
+    const { data: revList } = await (supabase.from('monthly_revenue' as any) as any)
+      .select('id, amount')
+      .eq('month', monthKey)
+      .limit(1);
+    const rev = revList?.[0];
+    if (rev) {
+      const next = Math.max(0, Number(rev.amount ?? 0) - Number(client.monthly_fee ?? 0));
+      await (supabase.from('monthly_revenue' as any) as any)
+        .update({ amount: next, updated_at: new Date().toISOString() })
+        .eq('id', rev.id);
+    }
+  } catch {
+    // Non-fatal.
+  }
+}

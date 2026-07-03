@@ -10,7 +10,7 @@ import {
 import { hexToast } from '@/components/hex/HexToast';
 import { ChevronDown, ChevronRight, Check, Search, Loader2, AlertCircle, X } from 'lucide-react';
 import { effectiveState } from '@/lib/billing';
-import { applyMonthlyPayment } from '@/lib/paymentCascade';
+import { applyMonthlyPayment, reverseMonthlyPayment } from '@/lib/paymentCascade';
 import { useAuth } from '@/hooks/useAuth';
 
 
@@ -86,9 +86,13 @@ export function AccountsTab() {
   const [revenueRows, setRevenueRows] = useState<RevenueRow[]>([]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [target, setTarget] = useState<{ client: Client; monthKey: string } | null>(null);
+  const [reverseTarget, setReverseTarget] = useState<{ client: Client; monthKey: string } | null>(null);
   const [payMethod, setPayMethod] = useState<string>('EcoCash');
   const [confirming, setConfirming] = useState(false);
+  const [reversing, setReversing] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [reverseError, setReverseError] = useState<string | null>(null);
+
   const [search, setSearch] = useState('');
   const [stateFilter, setStateFilter] = useState<'all' | 'active' | 'expiring' | 'expired' | 'suspended' | 'pending'>('all');
 
@@ -177,13 +181,16 @@ export function AccountsTab() {
     [revenueRows],
   );
 
-  const paymentCountByMonth = useMemo(() => {
-    const idx = new Map<string, number>();
+  const paymentStatsByMonth = useMemo(() => {
+    const idx = new Map<string, { count: number; sum: number }>();
     for (const p of payments) {
       if ((p.status || '').toUpperCase() !== 'PAID') continue;
       const d = new Date(p.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      idx.set(key, (idx.get(key) ?? 0) + 1);
+      const cur = idx.get(key) ?? { count: 0, sum: 0 };
+      cur.count += 1;
+      cur.sum += Number(p.amount ?? 0);
+      idx.set(key, cur);
     }
     return idx;
   }, [payments]);
@@ -202,6 +209,73 @@ export function AccountsTab() {
     setPayMethod('EcoCash');
     setConfirmError(null);
   };
+
+  const openReverse = (client: Client, monthKey: string) => {
+    setReverseTarget({ client, monthKey });
+    setReverseError(null);
+  };
+
+  const confirmReverse = async () => {
+    if (!reverseTarget) return;
+    const { client, monthKey } = reverseTarget;
+    setReversing(true);
+    setReverseError(null);
+
+    // Optimistic: strip the PAID rows for this user+month locally, add balance back.
+    const [ry, rm] = monthKey.split('-').map(Number);
+    const removedIds: string[] = [];
+    setPayments((prev) => prev.filter((p) => {
+      if ((p.status || '').toUpperCase() !== 'PAID') return true;
+      if (p.user_id !== client.user_id) return true;
+      const d = new Date(p.date);
+      if (d.getFullYear() === ry && d.getMonth() === rm - 1) {
+        removedIds.push(p.id);
+        return false;
+      }
+      return true;
+    }));
+    const prevClients = clients;
+    setClients((prev) =>
+      prev.map((c) =>
+        c.user_id === client.user_id
+          ? { ...c, balance: Number(c.balance ?? 0) + Number(c.monthly_fee ?? 0) }
+          : c,
+      ),
+    );
+    const label = labelFor(monthKey).full;
+    const closing = reverseTarget;
+    setReverseTarget(null);
+    hexToast.success(`Payment reversed — ${client.full_name ?? 'client'} · ${label}`);
+
+    try {
+      await reverseMonthlyPayment({
+        client: {
+          user_id: client.user_id,
+          full_name: client.full_name,
+          email: null,
+          phone: client.phone,
+          monthly_fee: client.monthly_fee,
+          balance: client.balance,
+          billing_day: client.billing_day,
+          account_state: client.account_state,
+          last_paid_date: client.last_paid_date,
+        },
+        monthKey,
+      });
+      load();
+    } catch (e: any) {
+      setClients(prevClients);
+      // Refetch is safest for restoring payments; also restore modal.
+      load();
+      setReverseTarget(closing);
+      const msg = e?.message ?? 'Failed to reverse payment';
+      setReverseError(msg);
+      hexToast.error(msg);
+    } finally {
+      setReversing(false);
+    }
+  };
+
 
   const confirmPayment = async () => {
     if (!target) return;
@@ -442,9 +516,14 @@ export function AccountsTab() {
                         <MonthCheck
                           paid={currentPaid}
                           disabled={!c.billing_day}
-                          onClick={() => !currentPaid && openConfirm(c, currentMonthKey)}
+                          onClick={() =>
+                            currentPaid
+                              ? openReverse(c, currentMonthKey)
+                              : openConfirm(c, currentMonthKey)
+                          }
                         />
                       </td>
+
                       <td className="px-3 py-3 text-center">{stateBadge(eff)}</td>
                     </tr>
 
@@ -475,8 +554,11 @@ export function AccountsTab() {
                                     <MonthCheck
                                       paid={paid}
                                       disabled={!c.billing_day}
-                                      onClick={() => !paid && openConfirm(c, mk)}
+                                      onClick={() =>
+                                        paid ? openReverse(c, mk) : openConfirm(c, mk)
+                                      }
                                     />
+
                                   </div>
                                 );
                               })}
@@ -538,17 +620,19 @@ export function AccountsTab() {
                 <td className="sticky left-0 z-10 bg-background/95 backdrop-blur px-3 py-2 font-mono text-[11px] text-green-400">REVENUE</td>
                 {monthKeys.map((mk) => {
                   const rev = revenueMap.get(mk);
-                  const count = paymentCountByMonth.get(mk) ?? 0;
+                  const stats = paymentStatsByMonth.get(mk) ?? { count: 0, sum: 0 };
                   return (
                     <td key={mk} className="px-1 py-1">
                       <RevenueCell
                         row={rev}
-                        paymentCount={count}
+                        paymentCount={stats.count}
+                        computedSum={stats.sum}
                         onSave={(v) => saveRevenue(mk, v)}
                       />
                     </td>
                   );
                 })}
+
               </tr>
 
               <tr className="border-t border-border/40 bg-red-500/5">
@@ -634,9 +718,56 @@ export function AccountsTab() {
 
         </DialogContent>
       </Dialog>
+
+      {/* ============ REVERSAL CONFIRMATION MODAL ============ */}
+      <Dialog open={!!reverseTarget} onOpenChange={(o) => !o && setReverseTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-mono tracking-[0.15em] text-amber-400 text-sm">
+              // Reverse Payment
+            </DialogTitle>
+          </DialogHeader>
+          {reverseTarget && (
+            <div className="space-y-4 text-sm">
+              <p className="text-foreground">
+                Undo the payment recorded for{' '}
+                <span className="font-semibold">{reverseTarget.client.full_name ?? 'client'}</span>?
+              </p>
+              <div className="rounded border border-amber-400/30 bg-amber-400/5 p-3 space-y-2 font-mono text-xs">
+                <Row k="MONTH" v={labelFor(reverseTarget.monthKey).full} />
+                <Row k="AMOUNT" v={`USD ${reverseTarget.client.monthly_fee.toFixed(2)}`} />
+                <Row k="EFFECT" v="Balance +, invoice → UNPAID, revenue −" />
+              </div>
+              {reverseError && (
+                <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-[1px]" />
+                  <span>{reverseError}</span>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReverseTarget(null)} disabled={reversing}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmReverse}
+              disabled={reversing}
+              className="bg-amber-500 hover:bg-amber-500/90 text-black"
+            >
+              {reversing ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Reversing…</>
+              ) : (
+                'Reverse Payment'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 function MonthCheck({ paid, disabled, onClick }: { paid: boolean; disabled?: boolean; onClick: () => void }) {
   return (
@@ -646,12 +777,14 @@ function MonthCheck({ paid, disabled, onClick }: { paid: boolean; disabled?: boo
       disabled={disabled}
       className={`w-5 h-5 rounded border flex items-center justify-center transition ${
         paid
-          ? 'bg-green-500 border-green-500'
+          ? 'bg-green-500 border-green-500 hover:bg-green-500/80'
           : disabled
             ? 'border-border/40 bg-muted/20 cursor-not-allowed'
             : 'border-border bg-background hover:border-primary'
       }`}
-      aria-label={paid ? 'Paid' : 'Mark paid'}
+      title={paid ? 'Click to reverse this payment' : 'Mark as paid'}
+      aria-label={paid ? 'Reverse payment' : 'Mark paid'}
+
     >
       {paid && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
     </button>
@@ -684,17 +817,23 @@ function Row({ k, v }: { k: string; v: string }) {
 function RevenueCell({
   row,
   paymentCount,
+  computedSum,
   onSave,
 }: {
   row?: { amount: number; logged_by: string | null };
   paymentCount: number;
+  computedSum: number;
   onSave: (v: string) => void;
 }) {
-  const amount = Number(row?.amount ?? 0);
+  // Manual override wins. Otherwise show the live sum from payment_history so
+  // historic months (and any drift in monthly_revenue) stay accurate.
   const isManual = !!row && row.logged_by !== null && row.logged_by !== 'auto';
-  const [val, setVal] = useState<string>(amount ? String(amount) : '');
+  const displayAmount = isManual ? Number(row!.amount ?? 0) : computedSum;
+  const [val, setVal] = useState<string>(displayAmount ? String(displayAmount) : '');
   const [focused, setFocused] = useState(false);
-  useEffect(() => { if (!focused) setVal(amount ? String(amount) : ''); }, [amount, focused]);
+  useEffect(() => {
+    if (!focused) setVal(displayAmount ? String(displayAmount) : '');
+  }, [displayAmount, focused]);
 
   const tooltip = isManual
     ? `Manually set by ${row?.logged_by}. Click to edit.`
@@ -709,7 +848,7 @@ function RevenueCell({
         onBlur={() => {
           setFocused(false);
           const next = val === '' ? 0 : parseFloat(val);
-          if (!Number.isNaN(next) && Math.abs(next - amount) > 0.005) {
+          if (!Number.isNaN(next) && Math.abs(next - displayAmount) > 0.005) {
             onSave(val === '' ? '0' : val);
           }
         }}
@@ -723,4 +862,5 @@ function RevenueCell({
       )}
     </div>
   );
+
 }
