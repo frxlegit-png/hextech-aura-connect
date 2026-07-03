@@ -181,13 +181,16 @@ export function AccountsTab() {
     [revenueRows],
   );
 
-  const paymentCountByMonth = useMemo(() => {
-    const idx = new Map<string, number>();
+  const paymentStatsByMonth = useMemo(() => {
+    const idx = new Map<string, { count: number; sum: number }>();
     for (const p of payments) {
       if ((p.status || '').toUpperCase() !== 'PAID') continue;
       const d = new Date(p.date);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      idx.set(key, (idx.get(key) ?? 0) + 1);
+      const cur = idx.get(key) ?? { count: 0, sum: 0 };
+      cur.count += 1;
+      cur.sum += Number(p.amount ?? 0);
+      idx.set(key, cur);
     }
     return idx;
   }, [payments]);
@@ -206,6 +209,73 @@ export function AccountsTab() {
     setPayMethod('EcoCash');
     setConfirmError(null);
   };
+
+  const openReverse = (client: Client, monthKey: string) => {
+    setReverseTarget({ client, monthKey });
+    setReverseError(null);
+  };
+
+  const confirmReverse = async () => {
+    if (!reverseTarget) return;
+    const { client, monthKey } = reverseTarget;
+    setReversing(true);
+    setReverseError(null);
+
+    // Optimistic: strip the PAID rows for this user+month locally, add balance back.
+    const [ry, rm] = monthKey.split('-').map(Number);
+    const removedIds: string[] = [];
+    setPayments((prev) => prev.filter((p) => {
+      if ((p.status || '').toUpperCase() !== 'PAID') return true;
+      if (p.user_id !== client.user_id) return true;
+      const d = new Date(p.date);
+      if (d.getFullYear() === ry && d.getMonth() === rm - 1) {
+        removedIds.push(p.id);
+        return false;
+      }
+      return true;
+    }));
+    const prevClients = clients;
+    setClients((prev) =>
+      prev.map((c) =>
+        c.user_id === client.user_id
+          ? { ...c, balance: Number(c.balance ?? 0) + Number(c.monthly_fee ?? 0) }
+          : c,
+      ),
+    );
+    const label = labelFor(monthKey).full;
+    const closing = reverseTarget;
+    setReverseTarget(null);
+    hexToast.success(`Payment reversed — ${client.full_name ?? 'client'} · ${label}`);
+
+    try {
+      await reverseMonthlyPayment({
+        client: {
+          user_id: client.user_id,
+          full_name: client.full_name,
+          email: null,
+          phone: client.phone,
+          monthly_fee: client.monthly_fee,
+          balance: client.balance,
+          billing_day: client.billing_day,
+          account_state: client.account_state,
+          last_paid_date: client.last_paid_date,
+        },
+        monthKey,
+      });
+      load();
+    } catch (e: any) {
+      setClients(prevClients);
+      // Refetch is safest for restoring payments; also restore modal.
+      load();
+      setReverseTarget(closing);
+      const msg = e?.message ?? 'Failed to reverse payment';
+      setReverseError(msg);
+      hexToast.error(msg);
+    } finally {
+      setReversing(false);
+    }
+  };
+
 
   const confirmPayment = async () => {
     if (!target) return;
