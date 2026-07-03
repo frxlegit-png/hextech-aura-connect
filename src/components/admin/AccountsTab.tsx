@@ -718,9 +718,56 @@ export function AccountsTab() {
 
         </DialogContent>
       </Dialog>
+
+      {/* ============ REVERSAL CONFIRMATION MODAL ============ */}
+      <Dialog open={!!reverseTarget} onOpenChange={(o) => !o && setReverseTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-mono tracking-[0.15em] text-amber-400 text-sm">
+              // Reverse Payment
+            </DialogTitle>
+          </DialogHeader>
+          {reverseTarget && (
+            <div className="space-y-4 text-sm">
+              <p className="text-foreground">
+                Undo the payment recorded for{' '}
+                <span className="font-semibold">{reverseTarget.client.full_name ?? 'client'}</span>?
+              </p>
+              <div className="rounded border border-amber-400/30 bg-amber-400/5 p-3 space-y-2 font-mono text-xs">
+                <Row k="MONTH" v={labelFor(reverseTarget.monthKey).full} />
+                <Row k="AMOUNT" v={`USD ${reverseTarget.client.monthly_fee.toFixed(2)}`} />
+                <Row k="EFFECT" v="Balance +, invoice → UNPAID, revenue −" />
+              </div>
+              {reverseError && (
+                <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-[1px]" />
+                  <span>{reverseError}</span>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReverseTarget(null)} disabled={reversing}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmReverse}
+              disabled={reversing}
+              className="bg-amber-500 hover:bg-amber-500/90 text-black"
+            >
+              {reversing ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Reversing…</>
+              ) : (
+                'Reverse Payment'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
 
 function MonthCheck({ paid, disabled, onClick }: { paid: boolean; disabled?: boolean; onClick: () => void }) {
   return (
