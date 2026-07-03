@@ -516,9 +516,14 @@ export function AccountsTab() {
                         <MonthCheck
                           paid={currentPaid}
                           disabled={!c.billing_day}
-                          onClick={() => !currentPaid && openConfirm(c, currentMonthKey)}
+                          onClick={() =>
+                            currentPaid
+                              ? openReverse(c, currentMonthKey)
+                              : openConfirm(c, currentMonthKey)
+                          }
                         />
                       </td>
+
                       <td className="px-3 py-3 text-center">{stateBadge(eff)}</td>
                     </tr>
 
