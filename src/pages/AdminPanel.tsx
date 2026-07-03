@@ -8,13 +8,14 @@ import { HexCard } from '@/components/hex/HexCard';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp, Receipt } from 'lucide-react';
+import { LogOut, Users, FileText, LifeBuoy, DollarSign, Settings, Home, Wallet, TrendingUp, Receipt, Wallet2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { CustomerManager } from '@/components/admin/CustomerManager';
 import { PaymentSettingsManager } from '@/components/admin/PaymentSettingsManager';
 import { RevenueManager } from '@/components/admin/RevenueManager';
 import { BillingTab } from '@/components/admin/BillingTab';
 import { InvoicesTab } from '@/components/admin/InvoicesTab';
+import { AccountsTab } from '@/components/admin/AccountsTab';
 import { useAdminStats } from '@/hooks/useAdminStats';
 
 interface TicketRow {
