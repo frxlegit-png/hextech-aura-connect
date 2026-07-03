@@ -13,6 +13,7 @@ import {
 } from '@/lib/billing';
 
 import { ensureCurrentCycleInvoice, dedupeUserInvoicesByMonth } from '@/lib/invoices';
+import { ensureBillingDayInvoice } from '@/lib/paymentCascade';
 
 import './PortalDashboard.css';
 
