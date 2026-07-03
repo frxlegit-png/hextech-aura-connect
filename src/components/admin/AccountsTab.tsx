@@ -271,8 +271,8 @@ export function AccountsTab() {
                 const currentPaid = paidSet.has(currentMonthKey);
                 const clientMonths = monthKeys.filter((k) => k >= c.joined);
                 return (
-                  <>
-                    <tr key={c.user_id} className="border-t border-border/40 hover:bg-muted/20">
+                  <Fragment key={c.user_id}>
+                    <tr className="border-t border-border/40 hover:bg-muted/20">
                       <td className="px-3 py-3">
                         <button
                           onClick={() => toggleExpand(c.user_id)}
