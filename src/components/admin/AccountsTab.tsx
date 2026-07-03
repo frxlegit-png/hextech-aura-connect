@@ -446,6 +446,20 @@ export function AccountsTab() {
               {clients.length === 0 && (
                 <tr><td colSpan={8} className="text-center px-3 py-8 text-muted-foreground text-xs">No clients yet.</td></tr>
               )}
+              {clients.length > 0 && filteredClients.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="text-center px-3 py-8 text-muted-foreground text-xs">
+                    No accounts match “{search}”{stateFilter !== 'all' ? ` in ${stateFilter}` : ''}.
+                    <button
+                      onClick={() => { setSearch(''); setStateFilter('all'); }}
+                      className="ml-2 text-primary hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  </td>
+                </tr>
+              )}
+
             </tbody>
           </table>
         </div>
