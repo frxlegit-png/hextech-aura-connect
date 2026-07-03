@@ -159,6 +159,7 @@ export type Database = {
           due_date: string
           id: string
           invoice_date: string
+          month_key: string | null
           plan: string
           status: string
           user_id: string
@@ -172,6 +173,7 @@ export type Database = {
           due_date: string
           id?: string
           invoice_date: string
+          month_key?: string | null
           plan?: string
           status?: string
           user_id: string
@@ -185,6 +187,7 @@ export type Database = {
           due_date?: string
           id?: string
           invoice_date?: string
+          month_key?: string | null
           plan?: string
           status?: string
           user_id?: string
