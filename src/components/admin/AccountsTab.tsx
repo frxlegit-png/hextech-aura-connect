@@ -8,7 +8,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import { hexToast } from '@/components/hex/HexToast';
-import { ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, Search, Loader2, AlertCircle, X } from 'lucide-react';
 import { effectiveState } from '@/lib/billing';
 import { applyMonthlyPayment } from '@/lib/paymentCascade';
 
@@ -75,6 +75,10 @@ export function AccountsTab() {
   const [target, setTarget] = useState<{ client: Client; monthKey: string } | null>(null);
   const [payMethod, setPayMethod] = useState<string>('EcoCash');
   const [confirming, setConfirming] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [stateFilter, setStateFilter] = useState<'all' | 'active' | 'expiring' | 'expired' | 'suspended' | 'pending'>('all');
+
 
   const load = async () => {
     const [{ data: billing }, { data: profiles }, { data: pays }, { data: sums }] = await Promise.all([
@@ -173,16 +177,47 @@ export function AccountsTab() {
   const openConfirm = (client: Client, monthKey: string) => {
     setTarget({ client, monthKey });
     setPayMethod('EcoCash');
+    setConfirmError(null);
   };
 
   const confirmPayment = async () => {
     if (!target) return;
     const { client, monthKey } = target;
     if (!client.billing_day) {
+      setConfirmError('Set a billing day on this account first.');
       hexToast.error('Set a billing day on this account first.');
       return;
     }
     setConfirming(true);
+    setConfirmError(null);
+
+    // Optimistic: inject a fake PAID row into local state so the check appears immediately.
+    const optimisticId = `optimistic-${crypto.randomUUID?.() ?? Date.now()}`;
+    const [y, m] = monthKey.split('-').map(Number);
+    const day = Math.min(client.billing_day, 28);
+    const optimisticDate = `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const optimisticPayment: Payment = {
+      id: optimisticId,
+      user_id: client.user_id,
+      date: optimisticDate,
+      amount: client.monthly_fee,
+      method: payMethod,
+      status: 'PAID',
+    };
+    setPayments((prev) => [...prev, optimisticPayment]);
+    const prevClients = clients;
+    setClients((prev) =>
+      prev.map((c) =>
+        c.user_id === client.user_id
+          ? { ...c, balance: Math.max(0, Number(c.balance ?? 0) - Number(c.monthly_fee ?? 0)) }
+          : c,
+      ),
+    );
+    const label = labelFor(monthKey).full;
+    const closingTarget = target;
+    setTarget(null);
+    hexToast.success(`Payment recorded — ${client.full_name ?? 'client'} · ${label}`);
+
     try {
       await applyMonthlyPayment({
         client: {
@@ -199,15 +234,21 @@ export function AccountsTab() {
         monthKey,
         method: payMethod,
       });
-      hexToast.success(`Payment confirmed for ${client.full_name ?? 'client'} — ${labelFor(monthKey).full}`);
-      setTarget(null);
       load();
     } catch (e: any) {
-      hexToast.error(e?.message ?? 'Failed to confirm payment');
+      // Rollback optimistic changes.
+      setPayments((prev) => prev.filter((p) => p.id !== optimisticId));
+      setClients(prevClients);
+      setTarget(closingTarget);
+      const msg = e?.message ?? 'Failed to confirm payment';
+      setConfirmError(msg);
+      hexToast.error(msg);
     } finally {
       setConfirming(false);
     }
   };
+
+
 
   const saveSummary = async (monthKey: string, field: 'expenses' | 'investments', raw: string) => {
     const val = parseFloat(raw);
@@ -225,6 +266,31 @@ export function AccountsTab() {
     else load();
   };
 
+  const filteredClients = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return clients.filter((c) => {
+      if (stateFilter !== 'all') {
+        const eff = effectiveState(c.billing_day, c.last_paid_date, c.account_state).toLowerCase();
+        if (eff !== stateFilter) return false;
+      }
+      if (!q) return true;
+      return (
+        (c.full_name ?? '').toLowerCase().includes(q) ||
+        (c.account_id ?? '').toLowerCase().includes(q) ||
+        (c.phone ?? '').toLowerCase().includes(q)
+      );
+    });
+  }, [clients, search, stateFilter]);
+
+  const STATE_FILTERS = [
+    { key: 'all', label: 'All' },
+    { key: 'active', label: 'Active' },
+    { key: 'expiring', label: 'Expiring' },
+    { key: 'expired', label: 'Expired' },
+    { key: 'suspended', label: 'Suspended' },
+    { key: 'pending', label: 'Pending' },
+  ] as const;
+
   return (
     <div className="space-y-6">
       {/* ============ SECTION 1: CLIENT ACCOUNTS ============ */}
@@ -234,7 +300,45 @@ export function AccountsTab() {
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">// Section 01</div>
             <div className="text-sm font-semibold text-foreground">Client Accounts</div>
           </div>
-          <div className="text-[10px] font-mono text-muted-foreground">{clients.length} clients</div>
+          <div className="text-[10px] font-mono text-muted-foreground">
+            {filteredClients.length} / {clients.length} clients
+          </div>
+        </div>
+
+        {/* Search + filter controls */}
+        <div className="border-b border-border px-4 py-3 flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, Account ID, or phone…"
+              className="pl-9 pr-9 h-9"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex gap-1 overflow-x-auto">
+            {STATE_FILTERS.map((f) => (
+              <Button
+                key={f.key}
+                size="sm"
+                variant={stateFilter === f.key ? 'default' : 'outline'}
+                onClick={() => setStateFilter(f.key)}
+                className="uppercase tracking-[0.12em] text-[10px] h-8"
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -252,14 +356,15 @@ export function AccountsTab() {
               </tr>
             </thead>
             <tbody>
-              {clients.map((c, idx) => {
+              {filteredClients.map((c, idx) => {
                 const isOpen = expanded.has(c.user_id);
                 const eff = effectiveState(c.billing_day, c.last_paid_date, c.account_state);
                 const paidSet = paidIndex.get(c.user_id) ?? new Set<string>();
                 const currentPaid = paidSet.has(currentMonthKey);
                 const clientMonths = monthKeys.filter((k) => k >= c.joined);
-                const prevDay = idx > 0 ? clients[idx - 1].billing_day : null;
+                const prevDay = idx > 0 ? filteredClients[idx - 1].billing_day : null;
                 const showDivider = idx === 0 || c.billing_day !== prevDay;
+
                 const dividerLabel = c.billing_day ? `— DAY ${c.billing_day} —` : '— NO BILLING DAY —';
                 return (
                   <Fragment key={c.user_id}>
@@ -341,6 +446,20 @@ export function AccountsTab() {
               {clients.length === 0 && (
                 <tr><td colSpan={8} className="text-center px-3 py-8 text-muted-foreground text-xs">No clients yet.</td></tr>
               )}
+              {clients.length > 0 && filteredClients.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="text-center px-3 py-8 text-muted-foreground text-xs">
+                    No accounts match “{search}”{stateFilter !== 'all' ? ` in ${stateFilter}` : ''}.
+                    <button
+                      onClick={() => { setSearch(''); setStateFilter('all'); }}
+                      className="ml-2 text-primary hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  </td>
+                </tr>
+              )}
+
             </tbody>
           </table>
         </div>
@@ -440,14 +559,25 @@ export function AccountsTab() {
                   {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
+              {confirmError && (
+                <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-[1px]" />
+                  <span>{confirmError}</span>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setTarget(null)} disabled={confirming}>Cancel</Button>
             <Button onClick={confirmPayment} disabled={confirming}>
-              {confirming ? 'Confirming…' : 'Confirm'}
+              {confirming ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Confirming…</>
+              ) : (
+                'Confirm'
+              )}
             </Button>
           </DialogFooter>
+
         </DialogContent>
       </Dialog>
     </div>
