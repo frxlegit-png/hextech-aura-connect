@@ -760,17 +760,23 @@ function Row({ k, v }: { k: string; v: string }) {
 function RevenueCell({
   row,
   paymentCount,
+  computedSum,
   onSave,
 }: {
   row?: { amount: number; logged_by: string | null };
   paymentCount: number;
+  computedSum: number;
   onSave: (v: string) => void;
 }) {
-  const amount = Number(row?.amount ?? 0);
+  // Manual override wins. Otherwise show the live sum from payment_history so
+  // historic months (and any drift in monthly_revenue) stay accurate.
   const isManual = !!row && row.logged_by !== null && row.logged_by !== 'auto';
-  const [val, setVal] = useState<string>(amount ? String(amount) : '');
+  const displayAmount = isManual ? Number(row!.amount ?? 0) : computedSum;
+  const [val, setVal] = useState<string>(displayAmount ? String(displayAmount) : '');
   const [focused, setFocused] = useState(false);
-  useEffect(() => { if (!focused) setVal(amount ? String(amount) : ''); }, [amount, focused]);
+  useEffect(() => {
+    if (!focused) setVal(displayAmount ? String(displayAmount) : '');
+  }, [displayAmount, focused]);
 
   const tooltip = isManual
     ? `Manually set by ${row?.logged_by}. Click to edit.`
@@ -785,7 +791,7 @@ function RevenueCell({
         onBlur={() => {
           setFocused(false);
           const next = val === '' ? 0 : parseFloat(val);
-          if (!Number.isNaN(next) && Math.abs(next - amount) > 0.005) {
+          if (!Number.isNaN(next) && Math.abs(next - displayAmount) > 0.005) {
             onSave(val === '' ? '0' : val);
           }
         }}
@@ -799,4 +805,5 @@ function RevenueCell({
       )}
     </div>
   );
+
 }
