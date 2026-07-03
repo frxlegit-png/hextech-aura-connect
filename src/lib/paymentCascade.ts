@@ -333,19 +333,11 @@ export async function reverseMonthlyPayment(opts: {
     .update(patch)
     .eq('user_id', client.user_id);
 
-  // 6. Subtract from monthly_revenue (floor at 0). Preserve logged_by.
+  // 6. Recompute monthly_revenue for this month from live payment_history.
+  //    Preserves manual overrides. Guarantees Section 2, dashboard, and Revenue
+  //    tab stay in lock-step with the true PAID sum after a reversal.
   try {
-    const { data: revList } = await (supabase.from('monthly_revenue' as any) as any)
-      .select('id, amount')
-      .eq('month', monthKey)
-      .limit(1);
-    const rev = revList?.[0];
-    if (rev) {
-      const next = Math.max(0, Number(rev.amount ?? 0) - Number(client.monthly_fee ?? 0));
-      await (supabase.from('monthly_revenue' as any) as any)
-        .update({ amount: next, updated_at: new Date().toISOString() })
-        .eq('id', rev.id);
-    }
+    await recomputeMonthlyRevenue(monthKey);
   } catch {
     // Non-fatal.
   }
