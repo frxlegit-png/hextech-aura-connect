@@ -179,15 +179,17 @@ const AdminPanel = () => {
             <RevenueManager />
           </div>
 
-          <Tabs defaultValue="customers" className="w-full">
-            <TabsList className="grid w-full grid-cols-6 mb-6">
-              <TabsTrigger value="customers"><Users className="w-4 h-4 mr-2" />Customers</TabsTrigger>
-              <TabsTrigger value="accounts"><Wallet2 className="w-4 h-4 mr-2" />Accounts</TabsTrigger>
-              <TabsTrigger value="billing"><Receipt className="w-4 h-4 mr-2" />Billing</TabsTrigger>
-              <TabsTrigger value="invoices"><FileText className="w-4 h-4 mr-2" />Invoices</TabsTrigger>
-              <TabsTrigger value="tickets"><LifeBuoy className="w-4 h-4 mr-2" />Support</TabsTrigger>
-              <TabsTrigger value="payments"><Wallet className="w-4 h-4 mr-2" />Payments</TabsTrigger>
-            </TabsList>
+          <Tabs defaultValue="accounts" className="w-full">
+            <div className="mb-6 -mx-6 px-6 overflow-x-auto">
+              <TabsList className="inline-flex w-max min-w-full gap-1">
+                <TabsTrigger value="customers" className="whitespace-nowrap"><Users className="w-4 h-4 mr-2" />Customers</TabsTrigger>
+                <TabsTrigger value="accounts" className="whitespace-nowrap"><Wallet2 className="w-4 h-4 mr-2" />Accounts</TabsTrigger>
+                <TabsTrigger value="billing" className="whitespace-nowrap"><Receipt className="w-4 h-4 mr-2" />Billing</TabsTrigger>
+                <TabsTrigger value="invoices" className="whitespace-nowrap"><FileText className="w-4 h-4 mr-2" />Invoices</TabsTrigger>
+                <TabsTrigger value="tickets" className="whitespace-nowrap"><LifeBuoy className="w-4 h-4 mr-2" />Support</TabsTrigger>
+                <TabsTrigger value="payments" className="whitespace-nowrap"><Wallet className="w-4 h-4 mr-2" />Payments</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="customers">
               <CustomerManager />
