@@ -730,12 +730,14 @@ function MonthCheck({ paid, disabled, onClick }: { paid: boolean; disabled?: boo
       disabled={disabled}
       className={`w-5 h-5 rounded border flex items-center justify-center transition ${
         paid
-          ? 'bg-green-500 border-green-500'
+          ? 'bg-green-500 border-green-500 hover:bg-green-500/80'
           : disabled
             ? 'border-border/40 bg-muted/20 cursor-not-allowed'
             : 'border-border bg-background hover:border-primary'
       }`}
-      aria-label={paid ? 'Paid' : 'Mark paid'}
+      title={paid ? 'Click to reverse this payment' : 'Mark as paid'}
+      aria-label={paid ? 'Reverse payment' : 'Mark paid'}
+
     >
       {paid && <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />}
     </button>
