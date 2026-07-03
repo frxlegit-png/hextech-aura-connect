@@ -40,6 +40,14 @@ interface Summary {
   investments: number;
 }
 
+interface RevenueRow {
+  id: string;
+  month: string;
+  amount: number;
+  logged_by: string | null;
+}
+
+
 const MONTH_LABELS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const METHODS = ['EcoCash', 'Bank Transfer', 'Omari', 'Cash'] as const;
 
