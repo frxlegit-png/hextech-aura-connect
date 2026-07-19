@@ -184,8 +184,38 @@ const AdminPanel = () => {
           </div>
 
           <div className="mb-8">
-            <RevenueManager />
+            <HexCard className="p-0 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setRevenueOpen((v) => !v)}
+                className="w-full flex items-center justify-between gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors"
+                aria-expanded={revenueOpen}
+              >
+                <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+                  // Revenue
+                </span>
+                <span className="font-mono text-primary text-sm sm:text-base truncate">
+                  {stats.monthlyRevenueLogged ? fmtMoney(stats.monthlyRevenue) : '$0.00'}
+                  <span className="text-muted-foreground text-xs ml-2">
+                    — {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </span>
+                </span>
+                <ChevronDown
+                  className={`w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-300 ${revenueOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+              <div
+                className={`grid transition-all duration-300 ease-out ${revenueOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="border-t border-border p-5">
+                    <RevenueManager />
+                  </div>
+                </div>
+              </div>
+            </HexCard>
           </div>
+
 
           <Tabs defaultValue="accounts" className="w-full">
             <div className="mb-6 -mx-6 px-6 overflow-x-auto">
