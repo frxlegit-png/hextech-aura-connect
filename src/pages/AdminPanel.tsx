@@ -36,6 +36,14 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const stats = useAdminStats();
 
+  const [revenueOpen, setRevenueOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('hex_admin_revenue_open') === '1';
+  });
+  useEffect(() => {
+    window.localStorage.setItem('hex_admin_revenue_open', revenueOpen ? '1' : '0');
+  }, [revenueOpen]);
+
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [ticketFilter, setTicketFilter] = useState<'all' | 'pending' | 'opened' | 'resolved'>('all');
   const [openTicket, setOpenTicket] = useState<TicketRow | null>(null);
