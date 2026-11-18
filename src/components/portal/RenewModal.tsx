@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { EcoCashSandbox } from './EcoCashSandbox';
+import type { useSandboxPayments } from '@/hooks/useSandboxPayments';
 
 type Settings = { ecocash: string; bank_account: string; omari: string };
 
 export function RenewModal({
-  open, onClose, amount, supportHref = 'mailto:support@hextech.co.zw',
+  open, onClose, amount, sandbox, supportHref = 'mailto:support@hextech.co.zw',
 }: {
   open: boolean;
   onClose: () => void;
   amount: string;
+  sandbox: ReturnType<typeof useSandboxPayments>;
   supportHref?: string;
 }) {
   const whatsappHref = 'https://wa.me/263719169960';
@@ -56,6 +59,8 @@ export function RenewModal({
         <button className="hx-modal-close" onClick={onClose} aria-label="Close">×</button>
         <div className="hx-modal-title">// Payment Details</div>
         <p className="hx-modal-sub">Send your payment to any of the following accounts and contact support to confirm.</p>
+
+        {import.meta.env.VITE_ECOCASH_SANDBOX === 'true' && <EcoCashSandbox sandbox={sandbox} />}
 
         <div className="hx-pay-list">
           {methods.map((m) => (

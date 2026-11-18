@@ -14,6 +14,7 @@ import {
 
 import { ensureCurrentCycleInvoice, dedupeUserInvoicesByMonth } from '@/lib/invoices';
 import { ensureBillingDayInvoice } from '@/lib/paymentCascade';
+import { useSandboxPayments } from '@/hooks/useSandboxPayments';
 
 import './PortalDashboard.css';
 
@@ -41,6 +42,7 @@ function formatDate(d: Date | string | null) {
 export default function PortalDashboard() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const sandbox = useSandboxPayments(user?.id, import.meta.env.VITE_ECOCASH_SANDBOX === 'true');
   const [billing, setBilling] = useState<BillingData | null>(null);
   const [showRenew, setShowRenew] = useState(false);
   const [payments, setPayments] = useState<Array<{ id: string; date: string; description: string; method: string; amount: number; status: string }>>([]);
@@ -111,13 +113,31 @@ export default function PortalDashboard() {
       if (pays) setPayments(pays as any);
     };
     load();
+    // Billing tables are not exposed through Realtime. Refresh their
+    // user-scoped, read-only view so a confirmed admin settlement is reflected
+    // without rerunning invoice creation or balance adjustment.
+    let mounted = true;
+    const refreshBillingView = async () => {
+      const [{ data: bill }, { data: pays }, { data: invs }] = await Promise.all([
+        supabase.from('customer_billing').select('account_id, billing_day, account_state, balance, monthly_fee, signal_strength, station_model, ip_address, frequency, last_paid_date' as any).eq('user_id', user.id).maybeSingle(),
+        (supabase.from('payment_history' as any) as any).select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(20),
+        (supabase.from('invoices' as any) as any).select('*').eq('user_id', user.id).order('invoice_date', { ascending: false }),
+      ]);
+      if (!mounted) return;
+      if (bill) setBilling(bill as unknown as BillingData);
+      if (pays) setPayments(pays as any);
+      if (invs) setInvoices(await dedupeUserInvoicesByMonth(invs as any[]) as InvoiceData[]);
+    };
+    const refreshTimer = window.setInterval(() => { if (document.visibilityState === 'visible') void refreshBillingView(); }, 10000);
+    const onVisible = () => { if (document.visibilityState === 'visible') void refreshBillingView(); };
+    document.addEventListener('visibilitychange', onVisible);
     const ch = supabase
       .channel('portal_self')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_billing', filter: `user_id=eq.${user.id}` }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history', filter: `user_id=eq.${user.id}` }, load)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices', filter: `user_id=eq.${user.id}` }, load)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => { mounted = false; window.clearInterval(refreshTimer); document.removeEventListener('visibilitychange', onVisible); supabase.removeChannel(ch); };
   }, [user]);
 
   const billingDay = billing?.billing_day ?? null;
@@ -319,7 +339,26 @@ export default function PortalDashboard() {
         {user && <SupportTickets userId={user.id} customerName={fullName} />}
       </div>
 
-      <RenewModal open={showRenew} onClose={() => setShowRenew(false)} amount={monthly} />
+      {import.meta.env.VITE_ECOCASH_SANDBOX === 'true' && (
+        <div className="wrap">
+          <div className="table-panel">
+            <div className="panel-title">// EcoCash Sandbox Tests</div>
+            <p className="hx-modal-sub">Simulated payments update test invoices and test balances. No real money moves.</p>
+            {sandbox.error && <p role="alert">{sandbox.error}</p>}
+            {sandbox.ready && sandbox.payments.length === 0 && <p>No test payments yet.</p>}
+            {sandbox.payments.map(p => (
+              <div className="detail-row" key={p.id}>
+                <div className="dr-key">USD {Number(p.amount).toFixed(2)} · {formatDate(p.created_at)}</div>
+                <div className="dr-val">{p.status === 'charged' ? 'SUCCEEDED' : p.status === 'abandoned' ? 'UNRESOLVED' : p.status.toUpperCase()}{p.ecocash_reference ? ` · ${p.ecocash_reference}` : ''}{p.failure_reason ? ` · ${p.failure_reason}` : ''}</div>
+                {p.status === 'refunded' && <div className="dr-val">Refund confirmed in EcoCash sandbox{p.refund_reference ? ` · ${p.refund_reference}` : ''}</div>}
+                {p.status === 'charged' && !p.settled_at && <div className="dr-val">Not applied to an invoice</div>}
+                {p.settled_at && Number(p.unapplied_amount) > 0 && <div className="dr-val">USD {Number(p.unapplied_amount).toFixed(2)} not applied or credited</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <RenewModal open={showRenew} onClose={() => setShowRenew(false)} amount={monthly} sandbox={sandbox} />
       <InvoiceModal invoice={openInvoice} onClose={() => setOpenInvoice(null)} />
 
     </div>

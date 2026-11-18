@@ -56,9 +56,7 @@ export async function ensureCurrentCycleInvoice(args: EnsureArgs): Promise<void>
 }
 
 /**
- * Dedupe a user's invoices by month — keep the most recent (by invoice_date,
- * then created_at) and delete older duplicates from the database.
- * Returns the deduped list.
+ * Dedupe the displayed list by month without deleting accounting records.
  */
 export async function dedupeUserInvoicesByMonth<T extends { id: string; user_id: string; invoice_date: string; created_at?: string }>(
   invoices: T[],
@@ -69,17 +67,13 @@ export async function dedupeUserInvoicesByMonth<T extends { id: string; user_id:
     return (b.created_at || '').localeCompare(a.created_at || '');
   });
   const seen = new Set<string>();
-  const dupes: string[] = [];
   const unique: T[] = [];
   for (const inv of sorted) {
     const ym = (inv.invoice_date || '').slice(0, 7);
     const key = `${inv.user_id}|${ym}`;
-    if (seen.has(key)) { dupes.push(inv.id); continue; }
+    if (seen.has(key)) continue;
     seen.add(key);
     unique.push(inv);
-  }
-  if (dupes.length) {
-    await (supabase.from('invoices' as any) as any).delete().in('id', dupes);
   }
   return unique;
 }

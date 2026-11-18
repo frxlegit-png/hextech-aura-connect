@@ -1,6 +1,6 @@
 // Admin-only edge function for managing users, roles, and customer billing.
-import { createClient } from 'npm:@supabase/supabase-js@2';
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'npm:@supabase/supabase-js@2.119.0';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2.119.0/cors';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -45,7 +45,6 @@ Deno.serve(async (req) => {
       const { data: roles } = await admin.from('user_roles').select('user_id, role');
       const { data: profiles } = await admin.from('profiles').select('user_id, full_name, email, phone');
       const { data: billing } = await admin.from('customer_billing').select('*');
-      const { data: creds } = await admin.from('customer_credentials').select('user_id, password_plain');
 
       const rolesByUser = new Map<string, string[]>();
       (roles ?? []).forEach((r: any) => {
@@ -54,7 +53,6 @@ Deno.serve(async (req) => {
       });
       const profileByUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
       const billingByUser = new Map((billing ?? []).map((b: any) => [b.user_id, b]));
-      const credsByUser = new Map((creds ?? []).map((c: any) => [c.user_id, c.password_plain]));
 
       const out = usersPage.users.map((u) => ({
         id: u.id,
@@ -63,7 +61,6 @@ Deno.serve(async (req) => {
         roles: rolesByUser.get(u.id) ?? [],
         profile: profileByUser.get(u.id) ?? null,
         billing: billingByUser.get(u.id) ?? null,
-        password_plain: credsByUser.get(u.id) ?? null,
       }));
       return json({ users: out });
     }
@@ -89,13 +86,12 @@ Deno.serve(async (req) => {
       }
       const uid = created.user!.id;
       await admin.from('user_roles').insert({ user_id: uid, role }).select();
-      // Save plaintext password copy for admin reveal + seed billing row
+      // Seed the billing row. Passwords are managed by Supabase Auth.
       const accountId = `HXT-${String(Math.floor(10000 + Math.random() * 89999))}`;
       await admin.from('customer_billing').upsert({
         user_id: uid,
         account_id: accountId,
       }, { onConflict: 'user_id' });
-      await admin.from('customer_credentials').upsert({ user_id: uid, password_plain: password }, { onConflict: 'user_id' });
       return json({ ok: true, user_id: uid });
     }
 
@@ -119,7 +115,6 @@ Deno.serve(async (req) => {
       if (!target) return json({ error: 'User not found' }, 404);
       const { error: updErr } = await admin.auth.admin.updateUserById(target.id, { password });
       if (updErr) return json({ error: friendlyPwd(updErr.message ?? '') }, 400);
-      await admin.from('customer_credentials').upsert({ user_id: target.id, password_plain: password }, { onConflict: 'user_id' });
       return json({ ok: true });
     }
 
