@@ -33,24 +33,20 @@ export function InvoicesTab() {
       .limit(500);
     if (!invs) return;
 
-    // Dedupe: one invoice per user per (year-month). Keep most recent invoice_date, then newest created_at.
+    // Dedupe the display only; older records may be needed for reconciliation.
     const sorted = [...invs].sort((a: any, b: any) => {
       const d = (b.invoice_date || '').localeCompare(a.invoice_date || '');
       if (d !== 0) return d;
       return (b.created_at || '').localeCompare(a.created_at || '');
     });
     const seen = new Set<string>();
-    const dupes: string[] = [];
     const unique: any[] = [];
     for (const inv of sorted) {
       const ym = (inv.invoice_date || '').slice(0, 7);
       const key = `${inv.user_id}|${ym}`;
-      if (seen.has(key)) { dupes.push(inv.id); continue; }
+      if (seen.has(key)) continue;
       seen.add(key);
       unique.push(inv);
-    }
-    if (dupes.length) {
-      await (supabase.from('invoices' as any) as any).delete().in('id', dupes);
     }
 
     const userIds = Array.from(new Set(unique.map((i: any) => i.user_id)));

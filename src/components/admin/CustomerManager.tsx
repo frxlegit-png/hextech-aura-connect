@@ -36,7 +36,6 @@ interface UserRow {
   roles: string[];
   profile: ProfileRow | null;
   billing: BillingRow | null;
-  password_plain?: string | null;
 }
 
 export function CustomerManager() {
@@ -97,7 +96,7 @@ export function CustomerManager() {
         <form onSubmit={handleCreate} className="grid sm:grid-cols-2 gap-3">
           <Input type="text" placeholder="Full name (optional)" value={cName} onChange={(e) => setCName(e.target.value)} />
           <Input type="email" placeholder="client@email.com" value={cEmail} onChange={(e) => setCEmail(e.target.value)} required />
-          <Input type="text" placeholder="Password (min 8 chars)" value={cPwd} onChange={(e) => setCPwd(e.target.value)} required minLength={8} className="sm:col-span-2" />
+          <Input type="password" placeholder="Password (min 8 chars)" value={cPwd} onChange={(e) => setCPwd(e.target.value)} required minLength={8} className="sm:col-span-2" />
           <Button type="submit" disabled={busy || !cEmail || cPwd.length < 8} className="sm:col-span-2">
             <UserPlus className="w-4 h-4 mr-2" /> Create Account
           </Button>
@@ -222,7 +221,7 @@ function CustomerDetailsEditor({
     full_name: user.profile?.full_name ?? '',
     email: user.email ?? '',
     phone: user.profile?.phone ?? '',
-    password: user.password_plain ?? '',
+    password: '',
   };
   const [form, setForm] = useState(initial);
   const [showPwd, setShowPwd] = useState(false);

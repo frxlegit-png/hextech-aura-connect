@@ -157,8 +157,7 @@ import { supabase } from '@/integrations/supabase/client';
  *
  *  - Writes `account_state = 'expired'` when live state is expired and stored
  *    state is anything other than `suspended` / `pending` / `expired`.
- *  - Writes `balance = monthly_fee` when live state is expired and the stored
- *    balance doesn't already match the monthly fee.
+ *  - Initializes a zero balance to the monthly fee when the account first expires.
  *  - Skips manual overrides (suspended / pending) entirely.
  *
  * Returns true when any DB update was written.
@@ -182,7 +181,7 @@ export async function syncExpiredBalance(row: {
   if ((row.account_state ?? '').toLowerCase() !== 'expired') {
     patch.account_state = 'expired';
   }
-  if (fee > 0 && Math.abs(current - fee) >= 0.005) {
+  if (fee > 0 && current <= 0.005 && (row.account_state ?? '').toLowerCase() !== 'expired') {
     patch.balance = fee;
   }
   if (Object.keys(patch).length === 0) return false;

@@ -169,7 +169,7 @@ export async function recomputeMonthlyRevenue(monthKey: string): Promise<void> {
 /**
  * Auto-generate an UNPAID invoice for the current month once the billing day
  * has arrived, if none exists yet. Idempotent via `month_key`.
- * Also enforces the "keep only 5 most recent invoices" rule.
+ * Retains older invoices for payment reconciliation.
  */
 export async function ensureBillingDayInvoice(client: {
   user_id: string;
@@ -209,18 +209,6 @@ export async function ensureBillingDayInvoice(client: {
     status: 'UNPAID',
   });
 
-  // Trim to 5 most recent invoices per client.
-  const { data: all } = await (supabase.from('invoices' as any) as any)
-    .select('id, invoice_date, created_at')
-    .eq('user_id', client.user_id)
-    .order('invoice_date', { ascending: false })
-    .order('created_at', { ascending: false });
-  if (all && all.length > 5) {
-    const toDelete = all.slice(5).map((r: any) => r.id);
-    if (toDelete.length) {
-      await (supabase.from('invoices' as any) as any).delete().in('id', toDelete);
-    }
-  }
 }
 
 /**
